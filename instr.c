@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const struct
+struct opcode
 {
     const char *mnemo;
     int rel;
@@ -12,8 +12,21 @@ static const struct
     int ext;
     int indx;
     int indy;
-} g_opcodes[] = {
+};
+
+typedef struct opcode opcode;
+
+static opcode g_opcodes[] = {
 #define X(A,B,C,D,E,F,G,H) { #A,B,C,D,E,F,G,H },
 #include "opcodes.def"
 #undef X
 };
+
+opcode* get_opcode(char* mnemo)
+{
+    unsigned int i;
+    for (i = 0; i < (sizeof(g_opcodes) / sizeof(g_opcodes[0])); i++)
+        if (!strcmp(mnemo, g_opcodes[i].mnemo))
+            return &g_opcodes[i];
+    return NULL;
+}
