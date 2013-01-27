@@ -1,6 +1,6 @@
 #ifndef PARSE
 #define PARSE
 
-void parse(FILE* stream);
+opcode* get_opcode(char* mnemo);
 
 #endif

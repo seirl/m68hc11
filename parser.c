@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "parser.h"
+#include "base.h"
+#include "instr.h"
 
 
 void error(char* msg, int line)
@@ -23,16 +24,16 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
     if (opr_addr[0] == '#')
     {
         *mode = IMM;
-        *opr_addr += 1;
+        opr_addr++;
     }
     base = opr_addr[0];
     switch (base)
     {
         case '%':
-            result = strtol(opr_addr, &endptr, 2);
+            result = strtol(opr_addr + 1, &endptr, 2);
             break;
         case '$':
-            result = strtol(opr_addr, &endptr, 16);
+            result = strtol(opr_addr + 1, &endptr, 16);
             break;
         default:
             sprintf(error_msg, "expected '%%' or '$', found %c", base);
@@ -40,14 +41,6 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
             return 1;
     }
     *operand = result;
-    if (opr_addr == endptr)
-    {
-        if (*operand > 0xFF)
-            *mode = DIR;
-        else
-            *mode = EXT;
-        return 0;
-    }
     opr_addr = endptr;
     if (opr_addr[0] == ',')
     {
@@ -78,15 +71,55 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
                 error(error_msg, l);
                 return 1;
             }
-            return 0;
+            opr_addr += 2;
         }
-        return 1;
     }
     else
     {
-        sprintf(error_msg, "unexpected %c", opr_addr[0]);
+        if (*operand <= 0xFF)
+            *mode = DIR;
+        else
+            *mode = EXT;
+    }
+
+    if (opr_addr[0] != '\0')
+    {
+        sprintf(error_msg, "unexpected '%c'", opr_addr[0]);
         error(error_msg, l);
         return 1;
+    }
+    else
+        return 0;
+}
+
+int opcode_from_mode(opcode* instr, addressing mode)
+{
+    switch(mode)
+    {
+        case REL:
+            return instr->rel;
+            break;
+        case INH:
+            return instr->inh;
+            break;
+        case IMM:
+            return instr->imm;
+            break;
+        case DIR:
+            return instr->dir;
+            break;
+        case EXT:
+            return instr->ext;
+            break;
+        case INDX:
+            return instr->indx;
+            break;
+        case INDY:
+            return instr->indy;
+            break;
+        default:
+            return -1;
+            break;
     }
 }
 
@@ -94,35 +127,59 @@ int parse_expr(char* line, int line_number)
 {
     char instr[5];
     char opr[32];
+    char error_msg[1000];
     int operand;
-    if (sscanf(line, "%s %s\n", instr, opr) < 2)
+    opcode* opc;
+    int has_operand;
+    int endmatch;
+    addressing mode;
+
+    if (sscanf(line, "%s%n", instr, &endmatch) < 1)
     {
-        if (sscanf(line, "%s\n", instr) < 1)
+        error("unexpected end of file", line_number);
+        return 1;
+    }
+
+    if (!strcmp(instr, "name"))
+        return 0;
+    else if (!strcmp(instr, "org"))
+        return 0;
+    else if (!strcmp(instr, "end"))
+        return 2;
+
+    if ((opc = get_opcode(instr)) == NULL)
+    {
+        sprintf(error_msg, "instruction %.5s unknown ", instr);
+        error(error_msg, line_number);
+        return 1;
+    }
+
+    has_operand = (opc->inh == -1);
+    if (has_operand)
+    {
+        if (sscanf(line + endmatch, "%s", opr) < 1)
         {
-            error("cannot parse line", line_number);
+            error("missing operand", line_number);
             return 1;
         }
-        else
-        {
-            if (!strcmp("end", instr))
-            {
-                return 2;
-            }
-            else
-            {
-                return 0;
-            }
-        }
+        
+        if (parse_operand(opr, &operand, &mode, line_number))
+            return 1;
     }
     else
+        mode = INH;
+
+    if (opcode_from_mode(opc, mode) == -1)
+        mode = REL;
+    if (opcode_from_mode(opc, mode) == -1)
     {
-        if (!strcmp("name", instr))
-        {
-            return 0;
-        }
-        addressing mode;
-        return parse_operand(opr, &operand, &mode, line_number);
+        sprintf(error_msg, "cannot find any opcode associated with '%s'",
+                instr);
+        error(error_msg, line_number);
+        return 1;
     }
+    printf("%X\n", opcode_from_mode(opc, mode));
+    return 0;
 }
 
 void parse(FILE* stream)
