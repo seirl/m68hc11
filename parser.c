@@ -7,7 +7,7 @@
 
 void error(char* msg, int line)
 {
-    printf("Error l%d: %s\n", line, msg);
+    printf("Error line %d: %s\n", line, msg);
 }
 
 
@@ -36,7 +36,7 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
             result = strtol(opr_addr + 1, &endptr, 16);
             break;
         default:
-            sprintf(error_msg, "expected '%%' or '$', found %c", base);
+            sprintf(error_msg, "expected '%%' or '$', found '%c'", base);
             error(error_msg, l);
             return 1;
     }
@@ -55,7 +55,7 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
         }
         else if (opr_addr[3] != '\0')
         {
-            sprintf(error_msg, "unexpected %c", opr_addr[3]);
+            sprintf(error_msg, "unexpected '%c'", opr_addr[3]);
             error(error_msg, l);
         }
         else
@@ -66,7 +66,7 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
                 *mode = INDY;
             else
             {
-                sprintf(error_msg, "expected 'X' or 'Y', found %c",
+                sprintf(error_msg, "expected 'X' or 'Y', found '%c'",
                         index_reg);
                 error(error_msg, l);
                 return 1;
@@ -149,7 +149,7 @@ int parse_expr(char* line, int line_number)
 
     if ((opc = get_opcode(instr)) == NULL)
     {
-        sprintf(error_msg, "instruction %.5s unknown ", instr);
+        sprintf(error_msg, "instruction '%.5s' unknown ", instr);
         error(error_msg, line_number);
         return 1;
     }
