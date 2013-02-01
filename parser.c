@@ -4,12 +4,14 @@
 #include "base.h"
 #include "instr.h"
 
-
 void error(char* msg, int line)
 {
     printf("Error line %d: %s\n", line, msg);
 }
 
+typedef struct {
+    char name[1000];
+} meta;
 
 int parse_operand(char* opr, int* operand, addressing* mode, int l)
 {
@@ -123,7 +125,7 @@ int opcode_from_mode(opcode* instr, addressing mode)
     }
 }
 
-int parse_expr(char* line, int line_number)
+int parse_expr(char* line, meta* mdata, int line_number)
 {
     char instr[5];
     char opr[32];
@@ -141,7 +143,10 @@ int parse_expr(char* line, int line_number)
     }
 
     if (!strcmp(instr, "name"))
+    {
+        strcpy(mdata->name, instr);
         return 0;
+    }
     else if (!strcmp(instr, "org"))
         return 0;
     else if (!strcmp(instr, "end"))
@@ -187,10 +192,11 @@ void parse(FILE* stream)
     char line[50];
     char* read;
     int i = 0;
+    meta mdata;
     while ((read = fgets(line, 49, stream)) != NULL)
     {
         i++;
-        if (parse_expr(line, i) > 0)
+        if (parse_expr(line, &mdata, i) > 0)
             break;
     }
 }

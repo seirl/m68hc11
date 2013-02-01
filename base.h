@@ -12,7 +12,7 @@ typedef enum
     INDY,/* Indexed (address of operand calculated by offset + Y) */
 } addressing;
 
-struct opcode
+typedef struct
 {
     const char *mnemo;
     int rel;
@@ -22,8 +22,10 @@ struct opcode
     int ext;
     int indx;
     int indy;
-};
+} opcode;
 
-typedef struct opcode opcode;
+typedef struct {
+    list_instr* next;
+} list_instr;
 
 #endif
