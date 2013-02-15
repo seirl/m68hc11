@@ -11,6 +11,7 @@ void error(char* msg, int line)
 
 typedef struct {
     char name[1000];
+    int org;
 } meta;
 
 int parse_operand(char* opr, int* operand, addressing* mode, int l)
@@ -147,44 +148,62 @@ int parse_expr(char* line, meta* mdata, int line_number)
         strcpy(mdata->name, instr);
         return 0;
     }
-    else if (!strcmp(instr, "org"))
-        return 0;
     else if (!strcmp(instr, "end"))
         return 2;
-
-    if ((opc = get_opcode(instr)) == NULL)
-    {
-        sprintf(error_msg, "instruction '%.5s' unknown ", instr);
-        error(error_msg, line_number);
-        return 1;
-    }
-
-    has_operand = (opc->inh == -1);
-    if (has_operand)
+    else if (!strcmp(instr, "org"))
     {
         if (sscanf(line + endmatch, "%s", opr) < 1)
         {
-            error("missing operand", line_number);
+            error("missing 'org' starting address", line_number);
             return 1;
         }
-        
         if (parse_operand(opr, &operand, &mode, line_number))
             return 1;
+        if (mode != DIR && mode != EXT)
+        {
+            error("adressing modes cannot be used with assembly directives",
+                    line_number);
+            return 1;
+        }
+        mdata->org = operand;
+        return 0;
     }
     else
-        mode = INH;
-
-    if (opcode_from_mode(opc, mode) == -1)
-        mode = REL;
-    if (opcode_from_mode(opc, mode) == -1)
     {
-        sprintf(error_msg, "cannot find any opcode associated with '%s'",
-                instr);
-        error(error_msg, line_number);
-        return 1;
+        if ((opc = get_opcode(instr)) == NULL)
+        {
+            sprintf(error_msg, "instruction '%.5s' unknown ", instr);
+            error(error_msg, line_number);
+            return 1;
+        }
+
+        has_operand = (opc->inh == -1);
+        if (has_operand)
+        {
+            if (sscanf(line + endmatch, "%s", opr) < 1)
+            {
+                error("missing operand", line_number);
+                return 1;
+            }
+
+            if (parse_operand(opr, &operand, &mode, line_number))
+                return 1;
+        }
+        else
+            mode = INH;
+
+        if (opcode_from_mode(opc, mode) == -1)
+            mode = REL;
+        if (opcode_from_mode(opc, mode) == -1)
+        {
+            sprintf(error_msg, "cannot find any opcode associated with '%s'",
+                    instr);
+            error(error_msg, line_number);
+            return 1;
+        }
+        printf("%X\n", opcode_from_mode(opc, mode));
+        return 0;
     }
-    printf("%X\n", opcode_from_mode(opc, mode));
-    return 0;
 }
 
 void parse(FILE* stream)
