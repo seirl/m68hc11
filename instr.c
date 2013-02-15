@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "base.h"
+#include "core.h"
 
 static opcode g_opcodes[] = {
 #define X(A,B,C,D,E,F,G,H) { #A,B,C,D,E,F,G,H },

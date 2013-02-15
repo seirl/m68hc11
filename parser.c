@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "base.h"
+#include "core.h"
 #include "instr.h"
 
 void error(char* msg, int line)
