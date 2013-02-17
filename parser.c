@@ -52,15 +52,18 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
         if (*mode == IMM)
         {
             error("register mode can't be both immediate and indexed", l);
+            return 1;
         }
         else if (index_reg == '\0')
         {
             error("expected a register name", l);
+            return 1;
         }
         else if (opr_addr[3] != '\0')
         {
             sprintf(error_msg, "unexpected '%c'", opr_addr[3]);
             error(error_msg, l);
+            return 1;
         }
         else
         {
@@ -78,12 +81,10 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
             opr_addr += 2;
         }
     }
-    else
+
+    if (*mode == DIR && *operand > 0xFF)
     {
-        if (*operand <= 0xFF)
-            *mode = DIR;
-        else
-            *mode = EXT;
+        *mode = EXT;
     }
 
     if (opr_addr[0] != '\0')
@@ -175,6 +176,13 @@ int parse_expr(char* line, meta* mdata, int line_number, list_instr** current)
         {
             sprintf(error_msg, "instruction '%.5s' unknown ", instr);
             error(error_msg, line_number);
+            return 1;
+        }
+
+        if (!mdata->org)
+        {
+            error("found an instruction before the 'org' directive",
+                    line_number);
             return 1;
         }
 
