@@ -3,6 +3,7 @@
 #include <string.h>
 #include "core.h"
 #include "instr.h"
+#include "utils.h"
 
 void error(char* msg, int line)
 {
@@ -201,11 +202,7 @@ int parse_expr(char* line, meta* mdata, int line_number, list_instr** current)
             error(error_msg, line_number);
             return 1;
         }
-        list_instr* element = malloc(sizeof(list_instr));
-        element->opcode = opcode_from_mode(opc, mode);
-        element->operand = operand;
-        element->next = NULL;
-        *current = element;
+        *current = add_list_instr(opcode_from_mode(opc, mode), operand);
         return 0;
     }
 }
@@ -217,17 +214,25 @@ void parse(FILE* stream)
     int i = 0;
     meta mdata;
     list_instr* list = NULL;
-    list_instr* current = NULL;
+    list_instr** current = &list;
     while ((read = fgets(line, 49, stream)) != NULL)
     {
         i++;
-        if (parse_expr(line, &mdata, i, &current) > 0)
+        if (parse_expr(line, &mdata, i, current) > 0)
             break;
-        if (current)
+        if (*current)
         {
             if (!list)
-                list = current;
-            current = current->next;
+                list = *current;
+            current = &((*current)->next);
         }
     }
+
+    list_instr* p = list;
+    while (p)
+    {
+        printf("%d %d\n", p->opcode, p->operand);
+        p = p->next;
+    }
+    free_list_instr(list);
 }
