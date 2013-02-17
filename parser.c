@@ -126,7 +126,7 @@ int opcode_from_mode(opcode* instr, addressing mode)
     }
 }
 
-int parse_expr(char* line, meta* mdata, int line_number)
+int parse_expr(char* line, meta* mdata, int line_number, list_instr** current)
 {
     char instr[5];
     char opr[32];
@@ -201,7 +201,11 @@ int parse_expr(char* line, meta* mdata, int line_number)
             error(error_msg, line_number);
             return 1;
         }
-        printf("%X\n", opcode_from_mode(opc, mode));
+        list_instr* element = malloc(sizeof(list_instr));
+        element->opcode = opcode_from_mode(opc, mode);
+        element->operand = operand;
+        element->next = NULL;
+        *current = element;
         return 0;
     }
 }
@@ -212,10 +216,18 @@ void parse(FILE* stream)
     char* read;
     int i = 0;
     meta mdata;
+    list_instr* list = NULL;
+    list_instr* current = NULL;
     while ((read = fgets(line, 49, stream)) != NULL)
     {
         i++;
-        if (parse_expr(line, &mdata, i) > 0)
+        if (parse_expr(line, &mdata, i, &current) > 0)
             break;
+        if (current)
+        {
+            if (!list)
+                list = current;
+            current = current->next;
+        }
     }
 }
