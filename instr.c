@@ -9,22 +9,17 @@ hashtbl* g_opcodes;
 
 void init_opcodes()
 {
-   opcode o;
-   g_opcodes = hashtbl_init(0
+    #define X(A,B,C,D,E,F,G,H) +1
+    g_opcodes = hashtbl_init(0
+        #include "opcodes.def"
+    );
+    #undef X
 
-#define X(...) +1
-#include "opcodes.def"
-#undef X
-
-           );
-
-#define X(A,B,C,D,E,F,G,H)                          \
-        o = (opcode) { #A,B,C,D,E,F,G,H };          \
-        hashtbl_add(g_opcodes, #A, &o, sizeof(o));  \
-
-#include "opcodes.def"
-#undef X
-
+    #define X(A,B,C,D,E,F,G,H)\
+        hashtbl_add(g_opcodes, #A,\
+        &((opcode) { #A,B,C,D,E,F,G,H }), sizeof(opcode));
+    #include "opcodes.def"
+    #undef X
 }
 
 opcode* get_opcode(char* mnemo)

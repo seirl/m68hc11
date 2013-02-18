@@ -222,6 +222,7 @@ void parse(FILE* stream)
     int i = 0;
     meta mdata;
     list_instr* list = NULL;
+    list_instr* p = NULL;
     list_instr** current = &list;
     while ((read = fgets(line, 49, stream)) != NULL)
     {
@@ -236,7 +237,7 @@ void parse(FILE* stream)
         }
     }
 
-    list_instr* p = list;
+    p = list;
     while (p)
     {
         printf("%d %d\n", p->opcode, p->operand);

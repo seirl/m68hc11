@@ -6,8 +6,9 @@
 
 int main(void)
 {
+    FILE* stream;
     init_opcodes();
-    FILE* stream = fopen("test.asm", "r");
+    stream = fopen("test.asm", "r");
     if (!stream)
     {
         return EXIT_FAILURE;
