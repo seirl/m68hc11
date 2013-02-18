@@ -1,36 +1,33 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "core.h"
+#include "hashtbl.h"
+#include "utils.h"
 
-static opcode g_opcodes[] = {
-#define X(A,B,C,D,E,F,G,H) { #A,B,C,D,E,F,G,H },
+hashtbl* g_opcodes;
+
+void init_opcodes()
+{
+   opcode o;
+   g_opcodes = hashtbl_init(0
+
+#define X(...) +1
 #include "opcodes.def"
 #undef X
-};
 
-int stricmp (const char *p1, const char *p2)
-{
-  register unsigned char *s1 = (unsigned char *) p1;
-  register unsigned char *s2 = (unsigned char *) p2;
-  unsigned char c1, c2;
-  do
-  {
-      c1 = (unsigned char) toupper((int)*s1++);
-      c2 = (unsigned char) toupper((int)*s2++);
-      if (c1 == '\0')
-            return c1 - c2;
-  }
-  while (c1 == c2);
-  return c1 - c2;
+           );
+
+#define X(A,B,C,D,E,F,G,H)                          \
+        o = (opcode) { #A,B,C,D,E,F,G,H };          \
+        hashtbl_add(g_opcodes, #A, &o, sizeof(o));  \
+
+#include "opcodes.def"
+#undef X
+
 }
 
 opcode* get_opcode(char* mnemo)
 {
-    unsigned int i;
-    for (i = 0; i < (sizeof(g_opcodes) / sizeof(g_opcodes[0])); i++)
-        if (!stricmp(mnemo, g_opcodes[i].mnemo))
-            return &g_opcodes[i];
-    return NULL;
+    return (opcode*) hashtbl_find(g_opcodes, strtoupper(mnemo));
 }

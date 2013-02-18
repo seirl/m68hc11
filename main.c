@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
+#include "core.h"
+#include "instr.h"
 
 int main(void)
 {
+    init_opcodes();
     FILE* stream = fopen("test.asm", "r");
     if (!stream)
     {

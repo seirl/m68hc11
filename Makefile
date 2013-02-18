@@ -1,7 +1,7 @@
 GCC := gcc
 NAME := m68k
 CFLAGS := -o ${NAME} -ansi -Wall -Wextra
-SOURCES := main.c utils.c parser.c instr.c
+SOURCES := main.c utils.c parser.c instr.c hashtbl.c
 
 all:
 	${GCC} ${CFLAGS} ${SOURCES}
