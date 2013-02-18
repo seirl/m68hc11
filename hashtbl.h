@@ -19,5 +19,6 @@ void* hashtbl_find(hashtbl* tbl, char* label);
 int hashtbl_add(hashtbl* tbl, char* label, void* data, size_t sdata);
 int hashtbl_delete(hashtbl* tbl, char* label);
 void hashtbl_print(hashtbl* tbl);
+void hashtbl_destroy(hashtbl* tbl);
 
 #endif
