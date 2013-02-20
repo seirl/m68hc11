@@ -247,7 +247,7 @@ int parse_expr(char* line, meta* mdata, int line_number, list* current)
     }
 }
 
-void parse(FILE* stream)
+list* parse(FILE* stream)
 {
     char line[50];
     char* read;
@@ -269,8 +269,9 @@ void parse(FILE* stream)
     while (p)
     {
         current = p->data;
-        printf("0x%X 0x%X (%d)\n", current->opcode, current->operand, current->size);
+        printf("0x%X 0x%X (%d)\n",
+                current->opcode, current->operand, current->size);
         p = p->next;
     }
-    list_destroy(list_instr);
+    return list_instr;
 }

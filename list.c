@@ -16,6 +16,7 @@ void list_append(list* l, void* data, size_t sdata)
     list_node* new = malloc(sdata);
     new->data = data;
     new->next = NULL;
+    new->prev = l->end;
     if(!l->start || !l->end)
         l->start = new;
     else
