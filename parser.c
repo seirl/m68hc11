@@ -15,9 +15,9 @@ typedef struct {
     int org;
 } meta;
 
-int parse_operand(char* opr, int* operand, addressing* mode, int l)
+int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
 {
-    char* opr_addr = opr;
+    const char* opr_addr = opr;
     char* endptr;
     char base;
     int result;
@@ -36,13 +36,22 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
         case '%':
             result = strtol(opr_addr + 1, &endptr, 2);
             break;
+        case '0':
+            result = strtol(opr_addr + 1, &endptr, 8);
+            break;
         case '$':
             result = strtol(opr_addr + 1, &endptr, 16);
             break;
         default:
-            sprintf(error_msg, "expected '%%' or '$', found '%c'", base);
-            error(error_msg, l);
-            return 1;
+            if ('1' <= base && base < '9')
+                result = strtol(opr_addr, &endptr, 10);
+            else
+            {
+                sprintf(error_msg, "expected a number, optionally following "
+                        "'%%' or '$', found '%c'", base);
+                error(error_msg, l);
+                return 1;
+            }
     }
     *operand = result;
     opr_addr = endptr;
@@ -82,9 +91,25 @@ int parse_operand(char* opr, int* operand, addressing* mode, int l)
         }
     }
 
+    if (*operand > 0xFFFF)
+    {
+        sprintf(error_msg, "all operands must be less that 16 bytes "
+                "(0x%X is too big)", *operand);
+        error(error_msg, l);
+        return 1;
+    }
+
     if (*mode == DIR && *operand > 0xFF)
     {
         *mode = EXT;
+    }
+
+    if ((*mode == INDX || *mode == INDY)  && *operand > 0xFF)
+    {
+        sprintf(error_msg, "offsets of indexed addressing modes must be less "
+                "than 8 bytes (0x%X is too big)", *operand);
+        error(error_msg, l);
+        return 1;
     }
 
     if (opr_addr[0] != '\0')
@@ -240,7 +265,7 @@ void parse(FILE* stream)
     p = list;
     while (p)
     {
-        printf("%d %d\n", p->opcode, p->operand);
+        printf("0x%X 0x%X\n", p->opcode, p->operand);
         p = p->next;
     }
     free_list_instr(list);
