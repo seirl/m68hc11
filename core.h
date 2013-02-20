@@ -27,6 +27,7 @@ typedef struct
 typedef struct instr {
     int opcode;
     int operand;
+    int size;
 } instr;
 
 #endif

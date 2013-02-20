@@ -241,6 +241,7 @@ int parse_expr(char* line, meta* mdata, int line_number, list* current)
         node = malloc(sizeof(instr));
         node->opcode = opcode_from_mode(opc, mode);
         node->operand = operand;
+        node->size = number_of_bytes(node);
         list_append(current, node, sizeof(instr));
         return 0;
     }
@@ -268,7 +269,7 @@ void parse(FILE* stream)
     while (p)
     {
         current = p->data;
-        printf("0x%X 0x%X\n", current->opcode, current->operand);
+        printf("0x%X 0x%X (%d)\n", current->opcode, current->operand, current->size);
         p = p->next;
     }
     list_destroy(list_instr);

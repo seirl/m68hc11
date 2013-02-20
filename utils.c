@@ -3,6 +3,14 @@
 #include <ctype.h>
 #include "core.h"
 
+int number_of_bytes(instr* i)
+{
+    if (i->opcode > 0xFFFF || i->operand > 0xFFFF ||
+            i->opcode < 0 || i->operand < 0)
+        return -1;
+    return 2 + (i->operand > 0xFF) + (i->opcode > 0xFF);
+}
+
 int stricmp (const char *p1, const char *p2)
 {
   register unsigned char *s1 = (unsigned char *) p1;
