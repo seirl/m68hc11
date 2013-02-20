@@ -38,16 +38,14 @@ typedef enum
     ST_INSTRUCTION
 } statement_type;
 
-typedef union
-{
-    instr* instruction;
-    char** label;
-} u_statement;
-
 typedef struct
 {
     statement_type t;
-    u_statement* u;
+    union
+    {
+        instr* instruction;
+        char* label;
+    } u;
 } statement;
 
 #endif

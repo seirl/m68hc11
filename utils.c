@@ -14,32 +14,26 @@ int number_of_bytes(const instr* i)
 statement* create_instr(const int opcode, const int operand)
 {
     statement* s;
-    u_statement* u;
     instr* i;
     s = malloc(sizeof(statement));
-    u = malloc(sizeof(u_statement));
     i = malloc(sizeof(instr));
     i->opcode = opcode;
     i->operand = operand;
     i->size = number_of_bytes(i);
-    u->instruction = i;
+    s->u.instruction = i;
     s->t = ST_INSTRUCTION;
-    s->u = u;
     return s;
 }
 
 statement* create_label(const char* label)
 {
     statement* s;
-    u_statement* u;
     char* l;
     s = malloc(sizeof(statement));
-    u = malloc(sizeof(u_statement));
     l = calloc(sizeof(char), strlen(label) + 1);
     strcpy(l, label);
-    u->label = &l;
+    s->u.label = l;
     s->t = ST_LABEL;
-    s->u = u;
     return s;
 }
 

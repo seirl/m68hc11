@@ -164,7 +164,6 @@ int parse_expr(char* line, meta* mdata, int line_number, list* current)
     int has_operand;
     int endmatch;
     addressing mode;
-    instr* node;
 
     if (sscanf(line, "%s%n", instr_name, &endmatch) < 1)
     {
@@ -195,6 +194,11 @@ int parse_expr(char* line, meta* mdata, int line_number, list* current)
             return 1;
         }
         mdata->org = operand;
+        return 0;
+    }
+    else if (instr_name[0] == ':')
+    {
+        list_append(current, create_label(instr_name + 1), sizeof(statement));
         return 0;
     }
     else
@@ -237,12 +241,9 @@ int parse_expr(char* line, meta* mdata, int line_number, list* current)
             error(error_msg, line_number);
             return 1;
         }
-
-        node = malloc(sizeof(instr));
-        node->opcode = opcode_from_mode(opc, mode);
-        node->operand = operand;
-        node->size = number_of_bytes(node);
-        list_append(current, node, sizeof(instr));
+        list_append(current,
+                create_instr(opcode_from_mode(opc, mode), operand),
+                sizeof(statement));
         return 0;
     }
 }
@@ -256,6 +257,7 @@ list* parse(FILE* stream)
     list* list_instr;
     list_node* p;
     instr* current;
+    statement* st;
 
     list_instr = list_init();
     while ((read = fgets(line, 49, stream)) != NULL)
@@ -268,9 +270,17 @@ list* parse(FILE* stream)
     p = list_instr->start;
     while (p)
     {
-        current = p->data;
-        printf("0x%X 0x%X (%d)\n",
-                current->opcode, current->operand, current->size);
+        st = p->data;
+        if (st->t == ST_INSTRUCTION)
+        {
+            current = st->u.instruction;
+            printf("0x%X 0x%X (%d)\n",
+                    current->opcode, current->operand, current->size);
+        }
+        else if (st->t == ST_LABEL)
+        {
+            printf(":%s\n", st->u.label);
+        }
         p = p->next;
     }
     return list_instr;
