@@ -24,10 +24,9 @@ typedef struct
     int indy;
 } opcode;
 
-typedef struct list_instr {
+typedef struct instr {
     int opcode;
     int operand;
-    struct list_instr* next;
-} list_instr;
+} instr;
 
 #endif

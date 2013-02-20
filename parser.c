@@ -3,6 +3,7 @@
 #include <string.h>
 #include "core.h"
 #include "instr.h"
+#include "list.h"
 #include "utils.h"
 
 void error(char* msg, int line)
@@ -153,9 +154,9 @@ int opcode_from_mode(opcode* instr, addressing mode)
     }
 }
 
-int parse_expr(char* line, meta* mdata, int line_number, list_instr** current)
+int parse_expr(char* line, meta* mdata, int line_number, list* current)
 {
-    char instr[5];
+    char instr_name[5];
     char opr[32];
     char error_msg[1000];
     int operand;
@@ -163,21 +164,22 @@ int parse_expr(char* line, meta* mdata, int line_number, list_instr** current)
     int has_operand;
     int endmatch;
     addressing mode;
+    instr* node;
 
-    if (sscanf(line, "%s%n", instr, &endmatch) < 1)
+    if (sscanf(line, "%s%n", instr_name, &endmatch) < 1)
     {
         error("unexpected end of file", line_number);
         return 1;
     }
 
-    if (!strcmp(instr, "name"))
+    if (!strcmp(instr_name, "name"))
     {
-        strcpy(mdata->name, instr);
+        strcpy(mdata->name, instr_name);
         return 0;
     }
-    else if (!strcmp(instr, "end"))
+    else if (!strcmp(instr_name, "end"))
         return 2;
-    else if (!strcmp(instr, "org"))
+    else if (!strcmp(instr_name, "org"))
     {
         if (sscanf(line + endmatch, "%s", opr) < 1)
         {
@@ -197,9 +199,9 @@ int parse_expr(char* line, meta* mdata, int line_number, list_instr** current)
     }
     else
     {
-        if ((opc = get_opcode(instr)) == NULL)
+        if ((opc = get_opcode(instr_name)) == NULL)
         {
-            sprintf(error_msg, "instruction '%.5s' unknown ", instr);
+            sprintf(error_msg, "instruction '%.5s' unknown ", instr_name);
             error(error_msg, line_number);
             return 1;
         }
@@ -231,11 +233,15 @@ int parse_expr(char* line, meta* mdata, int line_number, list_instr** current)
         if (opcode_from_mode(opc, mode) == -1)
         {
             sprintf(error_msg, "cannot find any opcode associated with '%s'",
-                    instr);
+                    instr_name);
             error(error_msg, line_number);
             return 1;
         }
-        *current = add_list_instr(opcode_from_mode(opc, mode), operand);
+
+        node = malloc(sizeof(instr));
+        node->opcode = opcode_from_mode(opc, mode);
+        node->operand = operand;
+        list_append(current, node, sizeof(instr));
         return 0;
     }
 }
@@ -246,27 +252,24 @@ void parse(FILE* stream)
     char* read;
     int i = 0;
     meta mdata;
-    list_instr* list = NULL;
-    list_instr* p = NULL;
-    list_instr** current = &list;
+    list* list_instr;
+    list_node* p;
+    instr* current;
+
+    list_instr = list_init();
     while ((read = fgets(line, 49, stream)) != NULL)
     {
         i++;
-        if (parse_expr(line, &mdata, i, current) > 0)
+        if (parse_expr(line, &mdata, i, list_instr) > 0)
             break;
-        if (*current)
-        {
-            if (!list)
-                list = *current;
-            current = &((*current)->next);
-        }
     }
 
-    p = list;
+    p = list_instr->start;
     while (p)
     {
-        printf("0x%X 0x%X\n", p->opcode, p->operand);
+        current = p->data;
+        printf("0x%X 0x%X\n", current->opcode, current->operand);
         p = p->next;
     }
-    free_list_instr(list);
+    list_destroy(list_instr);
 }
