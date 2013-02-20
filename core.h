@@ -24,10 +24,30 @@ typedef struct
     int indy;
 } opcode;
 
-typedef struct instr {
+
+typedef struct instr
+{
     int opcode;
     int operand;
     int size;
 } instr;
+
+typedef enum
+{
+    ST_LABEL,
+    ST_INSTRUCTION
+} statement_type;
+
+typedef union
+{
+    instr* instruction;
+    char** label;
+} u_statement;
+
+typedef struct
+{
+    statement_type t;
+    u_statement* u;
+} statement;
 
 #endif

@@ -14,11 +14,12 @@ typedef struct
     list_collisions** table;
 } hashtbl;
 
-hashtbl* hashtbl_init(int size);
-void* hashtbl_find(hashtbl* tbl, char* label);
-int hashtbl_add(hashtbl* tbl, char* label, void* data, size_t sdata);
-int hashtbl_delete(hashtbl* tbl, char* label);
-void hashtbl_print(hashtbl* tbl);
+hashtbl* hashtbl_init(const int size);
+void* hashtbl_find(hashtbl* tbl, const char* label);
+int hashtbl_add(hashtbl* tbl, const char* label, const void* data,
+        const size_t sdata);
+int hashtbl_delete(hashtbl* tbl, const char* label);
+void hashtbl_print(const hashtbl* tbl);
 void hashtbl_destroy(hashtbl* tbl);
 
 #endif

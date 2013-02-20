@@ -16,7 +16,7 @@ typedef struct list
 } list;
 
 list* list_init();
+void list_append(list* l, const void* data, const size_t sdata);
 void list_destroy(list* l);
-void list_append(list* l, void* data, size_t sdata);
 
 #endif

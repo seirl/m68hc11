@@ -3,7 +3,7 @@
 #include <string.h>
 #include "hashtbl.h"
 
-int hash(int size, char* str)
+int hash(const int size, const char* str)
 {
     int h = 1337;
     char c;
@@ -12,7 +12,7 @@ int hash(int size, char* str)
     return h;
 }
 
-hashtbl* hashtbl_init(int size)
+hashtbl* hashtbl_init(const int size)
 {
     int i;
     hashtbl* tbl = malloc(sizeof(hashtbl));
@@ -23,7 +23,7 @@ hashtbl* hashtbl_init(int size)
     return tbl;
 }
 
-void* hashtbl_find(hashtbl* tbl, char* label)
+void* hashtbl_find(hashtbl* tbl, const char* label)
 {
     list_collisions* p;
     int h = hash(tbl->size, label);
@@ -37,7 +37,8 @@ void* hashtbl_find(hashtbl* tbl, char* label)
     return NULL;
 }
 
-list_collisions* _hashtbl_create(char* label, void* data, size_t sdata)
+list_collisions* _hashtbl_create(const char* label, const void* data,
+        const size_t sdata)
 {
     list_collisions* new = malloc(sizeof(list_collisions));
     strcpy(new->label, label);
@@ -47,7 +48,8 @@ list_collisions* _hashtbl_create(char* label, void* data, size_t sdata)
     return new;
 }
 
-int hashtbl_add(hashtbl* tbl, char* label, void* data, size_t sdata)
+int hashtbl_add(hashtbl* tbl, const char* label, const void* data,
+        const size_t sdata)
 {
     list_collisions* p;
     int h = hash(tbl->size, label);
@@ -72,7 +74,7 @@ void _hashtbl_remove(list_collisions* elt)
     free(elt);
 }
 
-int hashtbl_delete(hashtbl* tbl, char* label)
+int hashtbl_delete(hashtbl* tbl, const char* label)
 {
     list_collisions* p;
     list_collisions* prev;
@@ -98,7 +100,7 @@ int hashtbl_delete(hashtbl* tbl, char* label)
     return 1;
 }
 
-void hashtbl_print(hashtbl* tbl)
+void hashtbl_print(const hashtbl* tbl)
 {
     int i;
     list_collisions* p;

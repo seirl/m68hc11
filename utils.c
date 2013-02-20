@@ -3,12 +3,44 @@
 #include <ctype.h>
 #include "core.h"
 
-int number_of_bytes(instr* i)
+int number_of_bytes(const instr* i)
 {
     if (i->opcode > 0xFFFF || i->operand > 0xFFFF ||
             i->opcode < 0 || i->operand < 0)
         return -1;
     return 2 + (i->operand > 0xFF) + (i->opcode > 0xFF);
+}
+
+statement* create_instr(const int opcode, const int operand)
+{
+    statement* s;
+    u_statement* u;
+    instr* i;
+    s = malloc(sizeof(statement));
+    u = malloc(sizeof(u_statement));
+    i = malloc(sizeof(instr));
+    i->opcode = opcode;
+    i->operand = operand;
+    i->size = number_of_bytes(i);
+    u->instruction = i;
+    s->t = ST_INSTRUCTION;
+    s->u = u;
+    return s;
+}
+
+statement* create_label(const char* label)
+{
+    statement* s;
+    u_statement* u;
+    char* l;
+    s = malloc(sizeof(statement));
+    u = malloc(sizeof(u_statement));
+    l = calloc(sizeof(char), strlen(label) + 1);
+    strcpy(l, label);
+    u->label = &l;
+    s->t = ST_LABEL;
+    s->u = u;
+    return s;
 }
 
 int stricmp (const char *p1, const char *p2)
@@ -29,7 +61,7 @@ int stricmp (const char *p1, const char *p2)
 
 char* strtoupper(const char* src)
 {
-    char* dst = malloc(sizeof(char) * strlen(src));
+    char* dst = calloc((strlen(src) + 1), sizeof(char));
     char* r = dst;
     while (*src)
     {

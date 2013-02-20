@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include "list.h"
 
 
@@ -11,10 +12,11 @@ list* list_init()
     return new;
 }
 
-void list_append(list* l, void* data, size_t sdata)
+void list_append(list* l, const void* data, const size_t sdata)
 {
-    list_node* new = malloc(sdata);
-    new->data = data;
+    list_node* new = malloc(sizeof(list_node));
+    new->data = malloc(sdata);
+    memcpy(new->data, data, sdata);
     new->next = NULL;
     new->prev = l->end;
     if(!l->start || !l->end)
