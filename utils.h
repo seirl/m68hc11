@@ -7,4 +7,8 @@ char* strtoupper(const char* src);
 statement* create_instr(const int opcode, const int operand);
 statement* create_label(const char* label);
 
+int among(char c, char* str);
+int is_blank(char c);
+char* skip_blank(char* c);
+
 #endif

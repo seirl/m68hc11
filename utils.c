@@ -25,6 +25,21 @@ statement* create_instr(const int opcode, const int operand)
     return s;
 }
 
+statement* create_refto(const int opcode, const char* reference_to)
+{
+    statement* s;
+    refto* r;
+    s = malloc(sizeof(statement));
+    r = malloc(sizeof(refto));
+    r->ref = calloc(strlen(reference_to), sizeof(char));
+    strcpy(r->ref, reference_to);
+    r->opcode = opcode;
+    r->size = 1 + (r->opcode > 0xFF);
+    s->u.reference_to = r;
+    s->t = ST_REFTO;
+    return s;
+}
+
 statement* create_label(const char* label)
 {
     statement* s;
@@ -63,4 +78,24 @@ char* strtoupper(const char* src)
         dst++;
     }
     return r;
+}
+
+int among(char c, char* str)
+{
+    while(*str)
+        if(*str++ == c)
+            return 1;
+    return 0;
+}
+
+int is_blank(char c)
+{
+    return among(c, " \t\n");
+}
+
+char* skip_blank(char* c)
+{
+    while(among(*c, " \t"))
+         c++; /* lol. */
+    return c;
 }

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "core.h"
 #include "instr.h"
 #include "list.h"
@@ -37,7 +38,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
         case '%':
             result = strtol(opr_addr + 1, &endptr, 2);
             break;
-        case '0':
+        case '@':
             result = strtol(opr_addr + 1, &endptr, 8);
             break;
         case '$':
@@ -49,7 +50,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
             else
             {
                 sprintf(error_msg, "expected a number, optionally following "
-                        "'%%' or '$', found '%c'", base);
+                        "'%%', '@' or '$', found '%c'", base);
                 error(error_msg, l);
                 return 1;
             }
@@ -154,37 +155,83 @@ int opcode_from_mode(opcode* instr, addressing mode)
     }
 }
 
-int parse_expr(char* line, meta* mdata, int line_number, list* current)
+int tokenize_line(char* line, char* label, char* opcode, char* operand)
 {
-    char instr_name[5];
-    char opr[32];
-    char error_msg[1000];
-    int operand;
-    opcode* opc;
-    int has_operand;
-    int endmatch;
-    addressing mode;
+    char* pline = line;
+    char* ptarget = label;
+    if(among(*pline, "*\n;"))
+        return 0;
 
-    if (sscanf(line, "%s%n", instr_name, &endmatch) < 1)
+    /* Parsing label */
+    while(!is_blank(*pline))
+        *ptarget++ = *pline++;
+    ptarget--;
+    if (*ptarget != ':')
+        ptarget++;
+    *ptarget = '\0';
+
+    pline = skip_blank(pline);
+    if(*pline == ';')
     {
-        error("unexpected end of file", line_number);
+        *opcode = '\0';
+        *operand = '\0';
         return 1;
     }
 
-    if (!strcmp(instr_name, "name"))
+    /* Parsing opcode */
+    ptarget = opcode;
+    while(!is_blank(*pline))
+        *ptarget++ = (unsigned char) toupper((int)*pline++);
+    *ptarget = '\0';
+
+    pline = skip_blank(pline);
+    if(*pline == ';')
+    {
+        *operand = '\0';
+        return 1;
+    }
+
+    /* Parsing operand */
+    ptarget = operand;
+    while(!among(*pline, "\n;"))
+        *ptarget++ = *pline++;
+    *ptarget = '\0';
+
+    return 1;
+}
+
+int parse_expr(char* line, meta* mdata, const int line_number, list* current)
+{
+    char error_msg[1000];
+    char label[300];
+    char instr_name[300];
+    char opr[300];
+
+    int operand;
+    opcode* opc;
+    int has_operand;
+    addressing mode;
+    statement* st;
+    static int current_addr = 0;
+
+    if(!tokenize_line(line, label, instr_name, opr))
+        return 0;
+
+    if (*label)
+        list_append(current, create_label(label), sizeof(statement));
+
+    if (!*instr_name)
+        return 0;
+
+    if (!strcmp(instr_name, "NAME"))
     {
         strcpy(mdata->name, instr_name);
         return 0;
     }
-    else if (!strcmp(instr_name, "end"))
+    else if (!strcmp(instr_name, "END"))
         return 2;
-    else if (!strcmp(instr_name, "org"))
+    else if (!strcmp(instr_name, "ORG"))
     {
-        if (sscanf(line + endmatch, "%s", opr) < 1)
-        {
-            error("missing 'org' starting address", line_number);
-            return 1;
-        }
         if (parse_operand(opr, &operand, &mode, line_number))
             return 1;
         if (mode != DIR && mode != EXT)
@@ -194,11 +241,7 @@ int parse_expr(char* line, meta* mdata, int line_number, list* current)
             return 1;
         }
         mdata->org = operand;
-        return 0;
-    }
-    else if (instr_name[0] == ':')
-    {
-        list_append(current, create_label(instr_name + 1), sizeof(statement));
+        current_addr = operand;
         return 0;
     }
     else
@@ -217,50 +260,60 @@ int parse_expr(char* line, meta* mdata, int line_number, list* current)
             return 1;
         }
 
-        has_operand = (opc->inh == -1);
+        has_operand = (opcode_from_mode(opc, INH) == -1);
+
         if (has_operand)
         {
-            if (sscanf(line + endmatch, "%s", opr) < 1)
+            if (!*opr)
             {
                 error("missing operand", line_number);
                 return 1;
             }
 
+            if (among(*opr,
+                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                        "abcdefghijklmnopqrstuvwxyz"
+                        "0123456789._"))
+            {}
             if (parse_operand(opr, &operand, &mode, line_number))
                 return 1;
         }
-        else
-            mode = INH;
 
-        if (opcode_from_mode(opc, mode) == -1)
+        if (!has_operand)
+            mode = INH;
+        if (opcode_from_mode(opc, mode) == -1 && opc->rel != -1)
             mode = REL;
-        if (opcode_from_mode(opc, mode) == -1)
+        else
         {
             sprintf(error_msg, "cannot find any opcode associated with '%s'",
                     instr_name);
             error(error_msg, line_number);
             return 1;
         }
-        list_append(current,
-                create_instr(opcode_from_mode(opc, mode), operand),
-                sizeof(statement));
+
+
+        st = create_instr(opcode_from_mode(opc, mode), operand);
+        st->u.instruction->addr = current_addr;
+        current_addr += st->u.instruction->size;
+        list_append(current, st, sizeof(statement));
         return 0;
     }
 }
 
 list* parse(FILE* stream)
 {
-    char line[50];
+    char line[1000];
     char* read;
     int i = 0;
     meta mdata;
     list* list_instr;
     list_node* p;
     instr* current;
+    refto* current_ref;
     statement* st;
 
     list_instr = list_init();
-    while ((read = fgets(line, 49, stream)) != NULL)
+    while ((read = fgets(line, 999, stream)) != NULL)
     {
         i++;
         if (parse_expr(line, &mdata, i, list_instr) > 0)
@@ -274,8 +327,14 @@ list* parse(FILE* stream)
         if (st->t == ST_INSTRUCTION)
         {
             current = st->u.instruction;
-            printf("0x%X 0x%X (%d)\n",
-                    current->opcode, current->operand, current->size);
+            printf("0x%X: 0x%X 0x%X\n",
+                    current->addr, current->opcode, current->operand);
+        }
+        else if (st->t == ST_REFTO)
+        {
+            current_ref = st->u.reference_to;
+            printf("0x%X: 0x%X <%s\n>",
+                    current_ref->addr, current_ref->opcode, current_ref->ref);
         }
         else if (st->t == ST_LABEL)
         {

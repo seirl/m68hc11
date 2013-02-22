@@ -25,17 +25,27 @@ typedef struct
 } opcode;
 
 
-typedef struct instr
+typedef struct
 {
     int opcode;
     int operand;
     int size;
+    int addr;
 } instr;
+
+typedef struct
+{
+    int opcode;
+    char* ref;
+    int size;
+    int addr;
+} refto;
 
 typedef enum
 {
     ST_LABEL,
-    ST_INSTRUCTION
+    ST_INSTRUCTION,
+    ST_REFTO
 } statement_type;
 
 typedef struct
@@ -45,6 +55,7 @@ typedef struct
     {
         instr* instruction;
         char* label;
+        refto* reference_to;
     } u;
 } statement;
 
