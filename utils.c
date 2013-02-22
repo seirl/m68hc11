@@ -11,45 +11,14 @@ int number_of_bytes(const instr* i)
     return 2 + (i->operand > 0xFF) + (i->opcode > 0xFF);
 }
 
-statement* create_instr(const int opcode, const int operand)
+instr* create_instr(const int opcode, const int operand)
 {
-    statement* s;
     instr* i;
-    s = malloc(sizeof(statement));
     i = malloc(sizeof(instr));
     i->opcode = opcode;
     i->operand = operand;
     i->size = number_of_bytes(i);
-    s->u.instruction = i;
-    s->t = ST_INSTRUCTION;
-    return s;
-}
-
-statement* create_refto(const int opcode, const char* reference_to)
-{
-    statement* s;
-    refto* r;
-    s = malloc(sizeof(statement));
-    r = malloc(sizeof(refto));
-    r->ref = calloc(strlen(reference_to), sizeof(char));
-    strcpy(r->ref, reference_to);
-    r->opcode = opcode;
-    r->size = 1 + (r->opcode > 0xFF);
-    s->u.reference_to = r;
-    s->t = ST_REFTO;
-    return s;
-}
-
-statement* create_label(const char* label)
-{
-    statement* s;
-    char* l;
-    s = malloc(sizeof(statement));
-    l = calloc(sizeof(char), strlen(label) + 1);
-    strcpy(l, label);
-    s->u.label = l;
-    s->t = ST_LABEL;
-    return s;
+    return i;
 }
 
 int stricmp (const char *p1, const char *p2)

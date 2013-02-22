@@ -9,7 +9,8 @@ typedef enum
     DIR, /* Direct (8b data following the opcode is the @ of the operand) */
     EXT, /* Extended (similar than direct but for 16b adresses) */
     INDX,/* Indexed (address of operand calculated by offset + X) */
-    INDY /* Indexed (address of operand calculated by offset + Y) */
+    INDY, /* Indexed (address of operand calculated by offset + Y) */
+    NO, /* Nothing */
 } addressing;
 
 typedef struct
@@ -29,6 +30,7 @@ typedef struct
 {
     int opcode;
     int operand;
+    char* ref;
     int size;
     int addr;
 } instr;

@@ -6,6 +6,9 @@
 #include "instr.h"
 #include "list.h"
 #include "utils.h"
+#include "hashtbl.h"
+
+#define IDEN "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._"
 
 void error(char* msg, int line)
 {
@@ -128,30 +131,14 @@ int opcode_from_mode(opcode* instr, addressing mode)
 {
     switch(mode)
     {
-        case REL:
-            return instr->rel;
-            break;
-        case INH:
-            return instr->inh;
-            break;
-        case IMM:
-            return instr->imm;
-            break;
-        case DIR:
-            return instr->dir;
-            break;
-        case EXT:
-            return instr->ext;
-            break;
-        case INDX:
-            return instr->indx;
-            break;
-        case INDY:
-            return instr->indy;
-            break;
-        default:
-            return -1;
-            break;
+        case REL:   return instr->rel;  break;
+        case INH:   return instr->inh;  break;
+        case IMM:   return instr->imm;  break;
+        case DIR:   return instr->dir;  break;
+        case EXT:   return instr->ext;  break;
+        case INDX:  return instr->indx; break;
+        case INDY:  return instr->indy; break;
+        default:    return -1;          break;
     }
 }
 
@@ -200,7 +187,8 @@ int tokenize_line(char* line, char* label, char* opcode, char* operand)
     return 1;
 }
 
-int parse_expr(char* line, meta* mdata, const int line_number, list* current)
+int eval_line(char* line, meta* mdata, const int line_number, list* current,
+        hashtbl* names)
 {
     char error_msg[1000];
     char label[300];
@@ -211,14 +199,36 @@ int parse_expr(char* line, meta* mdata, const int line_number, list* current)
     opcode* opc;
     int has_operand;
     addressing mode;
-    statement* st;
+    instr* i;
     static int current_addr = 0;
+
+    int* idata;
 
     if(!tokenize_line(line, label, instr_name, opr))
         return 0;
 
     if (*label)
-        list_append(current, create_label(label), sizeof(statement));
+    {
+        idata = malloc(sizeof(int));
+        if (!strcmp(instr_name, "EQU"))
+        {
+            parse_operand(opr, &operand, &mode, line_number);
+            if (mode != DIR && mode != EXT)
+            {
+                error("addressing modes cannot be used with assembly "
+                        "directives", line_number);
+                return 1;
+            }
+            *idata = operand;
+            hashtbl_add(names, label, idata, sizeof(int));
+            return 0;
+        }
+        else
+        {
+            *idata = current_addr;
+            hashtbl_add(names, label, idata, sizeof(int));
+        }
+    }
 
     if (!*instr_name)
         return 0;
@@ -236,7 +246,7 @@ int parse_expr(char* line, meta* mdata, const int line_number, list* current)
             return 1;
         if (mode != DIR && mode != EXT)
         {
-            error("adressing modes cannot be used with assembly directives",
+            error("addressing modes cannot be used with assembly directives",
                     line_number);
             return 1;
         }
@@ -261,7 +271,6 @@ int parse_expr(char* line, meta* mdata, const int line_number, list* current)
         }
 
         has_operand = (opcode_from_mode(opc, INH) == -1);
-
         if (has_operand)
         {
             if (!*opr)
@@ -270,32 +279,58 @@ int parse_expr(char* line, meta* mdata, const int line_number, list* current)
                 return 1;
             }
 
-            if (among(*opr,
-                        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                        "abcdefghijklmnopqrstuvwxyz"
-                        "0123456789._"))
-            {}
-            if (parse_operand(opr, &operand, &mode, line_number))
-                return 1;
+            if (among(*opr, IDEN))
+            {
+                if (opc->rel == -1)
+                {
+                    idata = (int*) hashtbl_find(names, opr);
+                    if(!idata)
+                    {
+                        sprintf(error_msg, "name %s undeclared", opr);
+                        error(error_msg, line_number);
+                        return 1;
+                    }
+                    operand = *idata;
+                    mode = (operand < 0xFF) ? DIR : EXT;
+                    i = create_instr(opcode_from_mode(opc, mode), operand);
+                    i->ref = NULL;
+                    i->addr = current_addr;
+                }
+                else
+                {
+                    i = create_instr(opcode_from_mode(opc, REL), 0);
+                    i->ref = calloc(strlen(opr) + 1, sizeof(char));
+                    strcpy(i->ref, opr);
+                    i->addr = current_addr;
+                }
+            }
+            else
+            {
+                if (parse_operand(opr, &operand, &mode, line_number))
+                    return 1;
+                if (!has_operand)
+                    mode = INH;
+                if (opcode_from_mode(opc, mode) == -1)
+                {
+                    if (opc->rel != -1)
+                        mode = REL;
+                    else
+                    {
+                        sprintf(error_msg,
+                                "cannot find any opcode associated with '%s'",
+                                instr_name);
+                        error(error_msg, line_number);
+                        return 1;
+                    }
+                }
+                i = create_instr(opcode_from_mode(opc, mode), operand);
+                i->addr = current_addr;
+                i->ref = NULL;
+            }
         }
 
-        if (!has_operand)
-            mode = INH;
-        if (opcode_from_mode(opc, mode) == -1 && opc->rel != -1)
-            mode = REL;
-        else
-        {
-            sprintf(error_msg, "cannot find any opcode associated with '%s'",
-                    instr_name);
-            error(error_msg, line_number);
-            return 1;
-        }
-
-
-        st = create_instr(opcode_from_mode(opc, mode), operand);
-        st->u.instruction->addr = current_addr;
-        current_addr += st->u.instruction->size;
-        list_append(current, st, sizeof(statement));
+        current_addr += i->size;
+        list_append(current, i, sizeof(instr));
         return 0;
     }
 }
@@ -305,41 +340,27 @@ list* parse(FILE* stream)
     char line[1000];
     char* read;
     int i = 0;
-    meta mdata;
+    meta mdata = { "", 0 };
     list* list_instr;
     list_node* p;
     instr* current;
-    refto* current_ref;
-    statement* st;
+
+    hashtbl* names = hashtbl_init(127);
 
     list_instr = list_init();
     while ((read = fgets(line, 999, stream)) != NULL)
     {
         i++;
-        if (parse_expr(line, &mdata, i, list_instr) > 0)
+        if (eval_line(line, &mdata, i, list_instr, names) > 0)
             break;
     }
 
     p = list_instr->start;
     while (p)
     {
-        st = p->data;
-        if (st->t == ST_INSTRUCTION)
-        {
-            current = st->u.instruction;
-            printf("0x%X: 0x%X 0x%X\n",
-                    current->addr, current->opcode, current->operand);
-        }
-        else if (st->t == ST_REFTO)
-        {
-            current_ref = st->u.reference_to;
-            printf("0x%X: 0x%X <%s\n>",
-                    current_ref->addr, current_ref->opcode, current_ref->ref);
-        }
-        else if (st->t == ST_LABEL)
-        {
-            printf(":%s\n", st->u.label);
-        }
+        current = p->data;
+        printf("0x%X: 0x%X 0x%X\n",
+                current->addr, current->opcode, current->operand);
         p = p->next;
     }
     return list_instr;
