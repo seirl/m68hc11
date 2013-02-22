@@ -1,6 +1,6 @@
 #ifndef PARSE
 #define PARSE
 
-void parse(FILE* stream);
+list* parse(FILE* stream);
 
 #endif

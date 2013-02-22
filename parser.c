@@ -358,8 +358,19 @@ int second_pass(list* list_instr, hashtbl* names)
             }
             else
             {
+                if (abs(*ref - current->addr) > 127)
+                {
+                    sprintf(error_msg, "%s label is too far (max offset is "
+                            "127, current is %d)", current->ref,
+                            abs(*ref - current->addr));
+                    error(error_msg, current->line);
+                    errn++;
+                }
+                else
+                {
+                    current->operand = *ref - current->addr;
+                }
                 current->ref = NULL;
-                current->operand = *ref;
             }
         }
         p = p->next;
@@ -372,30 +383,25 @@ list* parse(FILE* stream)
     char line[1000];
     char* read;
     int i = 0;
+    int n = 0;
+    int errn = 0;
     meta mdata = { "", 0 };
     list* list_instr;
-    list_node* p;
-    instr* current;
-
     hashtbl* names = hashtbl_init(127);
 
     list_instr = list_init();
     while ((read = fgets(line, 999, stream)) != NULL)
     {
         i++;
-        if (eval_line(line, &mdata, i, list_instr, names) > 0)
+        n = eval_line(line, &mdata, i, list_instr, names);
+        if (n == 2)
             break;
+        else if (n == 1)
+            errn++;
     }
 
-    second_pass(list_instr, names);
-
-    p = list_instr->start;
-    while (p)
-    {
-        current = p->data;
-        printf("0x%X: 0x%X 0x%X\n",
-                current->addr, current->opcode, current->operand);
-        p = p->next;
-    }
+    n = second_pass(list_instr, names);
+    if (n == 1)
+        errn++;
     return list_instr;
 }
