@@ -10,7 +10,6 @@ typedef enum
     EXT, /* Extended (similar than direct but for 16b adresses) */
     INDX,/* Indexed (address of operand calculated by offset + X) */
     INDY, /* Indexed (address of operand calculated by offset + Y) */
-    NO, /* Nothing */
 } addressing;
 
 typedef struct
@@ -32,6 +31,7 @@ typedef struct
     int operand;
     char* ref;
     int size;
+    int line;
     int addr;
 } instr;
 

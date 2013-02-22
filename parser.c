@@ -330,9 +330,41 @@ int eval_line(char* line, meta* mdata, const int line_number, list* current,
         }
 
         current_addr += i->size;
+        i->line = line_number;
         list_append(current, i, sizeof(instr));
         return 0;
     }
+}
+
+int second_pass(list* list_instr, hashtbl* names)
+{
+    list_node* p = list_instr->start;
+    instr* current;
+    int* ref;
+    char error_msg[1000];
+    int errn = 0;
+
+    while (p)
+    {
+        current = p->data;
+        if (current->ref)
+        {
+            ref = (int*) hashtbl_find(names, current->ref);
+            if (!ref)
+            {
+                sprintf(error_msg, "name %s undeclared", current->ref);
+                error(error_msg, current->line);
+                errn++;
+            }
+            else
+            {
+                current->ref = NULL;
+                current->operand = *ref;
+            }
+        }
+        p = p->next;
+    }
+    return (errn > 0);
 }
 
 list* parse(FILE* stream)
@@ -354,6 +386,8 @@ list* parse(FILE* stream)
         if (eval_line(line, &mdata, i, list_instr, names) > 0)
             break;
     }
+
+    second_pass(list_instr, names);
 
     p = list_instr->start;
     while (p)
