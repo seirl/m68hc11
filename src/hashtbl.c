@@ -17,7 +17,7 @@ hashtbl* hashtbl_init(const int size)
     int i;
     hashtbl* tbl = malloc(sizeof(hashtbl));
     tbl->size = size;
-    tbl->table = malloc(size * sizeof(list_collisions*));
+    tbl->table = calloc(size, sizeof(list_collisions*));
     for (i = 0; i < size; i++)
         tbl->table[i] = NULL;
     return tbl;

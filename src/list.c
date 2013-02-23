@@ -35,9 +35,9 @@ void list_destroy(list* l)
     while (p)
     {
         old = p;
+        p = p->next;
         free(old->data);
         free(old);
-        p = p->next;
     }
     free(l);
 }

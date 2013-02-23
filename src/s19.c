@@ -83,6 +83,7 @@ void fprint_s19(list* list_instr, char* name, const int default_length)
             fprintf(f, "%02X\n", (0xFF - (checksum & 0xFF)));
         }
     }
+    free(b);
     fprintf(f, "S9030000FC\n");
     fclose(f);
 }

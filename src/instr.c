@@ -28,7 +28,15 @@ void init_opcodes()
     #undef X
 }
 
+void destroy_opcodes()
+{
+    hashtbl_destroy(g_opcodes);
+}
+
 opcode* get_opcode(const char* mnemo)
 {
-    return (opcode*) hashtbl_find(g_opcodes, strtoupper(mnemo));
+    char* upper = strtoupper(mnemo);
+    opcode* res = hashtbl_find(g_opcodes, upper);
+    free(upper);
+    return res;
 }

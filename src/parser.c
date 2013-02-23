@@ -149,9 +149,12 @@ int tokenize_line(const char* line, char* label, char* opcode, char* operand)
     /* Parsing label */
     while(!is_blank(*pline))
         *ptarget++ = *pline++;
-    ptarget--;
-    if (*ptarget != ':')
-        ptarget++;
+    if(ptarget - 1 >= line)
+    {
+        ptarget--;
+        if (*ptarget != ':')
+            ptarget++;
+    }
     *ptarget = '\0';
 
     pline = skip_blank(pline);
@@ -193,7 +196,7 @@ int eval_line(const char* line, meta* mdata, const int l, const char* f,
     char opr[1000];
 
     int operand;
-    opcode* opc;
+    opcode* opc = NULL;
     int has_operand;
     addressing mode;
     instr* i;
@@ -323,10 +326,11 @@ int eval_line(const char* line, meta* mdata, const int l, const char* f,
                 i->ref = NULL;
             }
         }
-
         current_addr += i->size;
         i->line = l;
         list_append(current, i, sizeof(instr));
+
+        free(i);
         return 0;
     }
 }
@@ -368,6 +372,7 @@ int second_pass(list* list_instr, hashtbl* names, const char* f)
                     current->operand = *ref - current->addr;
                 }
                 current->ref = NULL;
+                free(current->ref);
             }
         }
         p = p->next;
@@ -413,6 +418,8 @@ list* parse(FILE* stream, char* name, const char* f)
     /* Second pass : resolve labels */
     if(second_pass(list_instr, names, f))
         errn++;
+
+    hashtbl_destroy(names);
 
     if (!list_instr->count && !errn)
     {

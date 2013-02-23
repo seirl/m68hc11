@@ -51,9 +51,11 @@ int main(int argc, char* argv[])
                 }
                 strcat(name, ".s19");
                 fprint_s19(l, name, s19_default_length);
+                list_destroy(l);
                 fclose(stream);
             }
         }
     }
+    destroy_opcodes();
     return EXIT_SUCCESS;
 }
