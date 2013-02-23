@@ -6,7 +6,7 @@
 #include "instr.h"
 #include "s19.h"
 
-int main(void)
+int main(int argc, char* argv[])
 {
     FILE* stream;
     list* l;
