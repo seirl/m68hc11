@@ -9,18 +9,15 @@
 #include "hashtbl.h"
 
 #define IDEN "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._"
-
-void error(const char* msg, const int line)
-{
-    printf("Error line %d: %s\n", line, msg);
-}
+#define ERROR(msg) printf("%s:%d:%s\n", f, l, msg);
 
 typedef struct {
     char name[1000];
     int org;
 } meta;
 
-int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
+int parse_operand(const char* opr, int* operand, addressing* mode,
+        const int l, const char* f)
 {
     const char* opr_addr = opr;
     char* endptr;
@@ -54,7 +51,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
             {
                 sprintf(error_msg, "expected a number, optionally following "
                         "'%%', '@' or '$', found '%c'", base);
-                error(error_msg, l);
+                ERROR(error_msg);
                 return 1;
             }
     }
@@ -65,18 +62,18 @@ int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
         index_reg = opr_addr[1];
         if (*mode == IMM)
         {
-            error("register mode can't be both immediate and indexed", l);
+            ERROR("register mode can't be both immediate and indexed");
             return 1;
         }
         else if (index_reg == '\0')
         {
-            error("expected a register name", l);
+            ERROR("expected a register name");
             return 1;
         }
         else if (opr_addr[3] != '\0')
         {
             sprintf(error_msg, "unexpected '%c'", opr_addr[3]);
-            error(error_msg, l);
+            ERROR(error_msg);
             return 1;
         }
         else
@@ -89,7 +86,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
             {
                 sprintf(error_msg, "expected 'X' or 'Y', found '%c'",
                         index_reg);
-                error(error_msg, l);
+                ERROR(error_msg);
                 return 1;
             }
             opr_addr += 2;
@@ -100,7 +97,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
     {
         sprintf(error_msg, "all operands must be less that 16 bytes "
                 "(0x%X is too big)", *operand);
-        error(error_msg, l);
+        ERROR(error_msg);
         return 1;
     }
 
@@ -113,14 +110,14 @@ int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
     {
         sprintf(error_msg, "offsets of indexed addressing modes must be less "
                 "than 8 bytes (0x%X is too big)", *operand);
-        error(error_msg, l);
+        ERROR(error_msg);
         return 1;
     }
 
     if (opr_addr[0] != '\0')
     {
         sprintf(error_msg, "unexpected '%c'", opr_addr[0]);
-        error(error_msg, l);
+        ERROR(error_msg);
         return 1;
     }
     else
@@ -187,7 +184,7 @@ int tokenize_line(const char* line, char* label, char* opcode, char* operand)
     return 1;
 }
 
-int eval_line(const char* line, meta* mdata, const int line_number,
+int eval_line(const char* line, meta* mdata, const int l, const char* f,
         list* current, hashtbl* names)
 {
     char error_msg[1000];
@@ -212,11 +209,11 @@ int eval_line(const char* line, meta* mdata, const int line_number,
         idata = malloc(sizeof(int));
         if (!strcmp(instr_name, "EQU"))
         {
-            parse_operand(opr, &operand, &mode, line_number);
+            parse_operand(opr, &operand, &mode, l, f);
             if (mode != DIR && mode != EXT)
             {
-                error("addressing modes cannot be used with assembly "
-                        "directives", line_number);
+                ERROR("addressing modes cannot be used with assembly "
+                        "directives");
                 return 1;
             }
             *idata = operand;
@@ -235,19 +232,18 @@ int eval_line(const char* line, meta* mdata, const int line_number,
 
     if (!strcmp(instr_name, "NAME"))
     {
-        strcpy(mdata->name, instr_name);
+        strcpy(mdata->name, opr);
         return 0;
     }
     else if (!strcmp(instr_name, "END"))
         return 2;
     else if (!strcmp(instr_name, "ORG"))
     {
-        if (parse_operand(opr, &operand, &mode, line_number))
+        if (parse_operand(opr, &operand, &mode, l, f))
             return 1;
         if (mode != DIR && mode != EXT)
         {
-            error("addressing modes cannot be used with assembly directives",
-                    line_number);
+            ERROR("addressing modes cannot be used with assembly directives");
             return 1;
         }
         mdata->org = operand;
@@ -259,14 +255,13 @@ int eval_line(const char* line, meta* mdata, const int line_number,
         if ((opc = get_opcode(instr_name)) == NULL)
         {
             sprintf(error_msg, "instruction '%.5s' unknown ", instr_name);
-            error(error_msg, line_number);
+            ERROR(error_msg);
             return 1;
         }
 
         if (!mdata->org)
         {
-            error("found an instruction before the 'org' directive",
-                    line_number);
+            ERROR("found an instruction before the 'org' directive");
             return 1;
         }
 
@@ -275,7 +270,7 @@ int eval_line(const char* line, meta* mdata, const int line_number,
         {
             if (!*opr)
             {
-                error("missing operand", line_number);
+                ERROR("missing operand");
                 return 1;
             }
 
@@ -287,7 +282,7 @@ int eval_line(const char* line, meta* mdata, const int line_number,
                     if(!idata)
                     {
                         sprintf(error_msg, "name %s undeclared", opr);
-                        error(error_msg, line_number);
+                        ERROR(error_msg);
                         return 1;
                     }
                     operand = *idata;
@@ -306,7 +301,7 @@ int eval_line(const char* line, meta* mdata, const int line_number,
             }
             else
             {
-                if (parse_operand(opr, &operand, &mode, line_number))
+                if (parse_operand(opr, &operand, &mode, l, f))
                     return 1;
                 if (!has_operand)
                     mode = INH;
@@ -319,7 +314,7 @@ int eval_line(const char* line, meta* mdata, const int line_number,
                         sprintf(error_msg,
                                 "cannot find any opcode associated with '%s'",
                                 instr_name);
-                        error(error_msg, line_number);
+                        ERROR(error_msg);
                         return 1;
                     }
                 }
@@ -330,19 +325,20 @@ int eval_line(const char* line, meta* mdata, const int line_number,
         }
 
         current_addr += i->size;
-        i->line = line_number;
+        i->line = l;
         list_append(current, i, sizeof(instr));
         return 0;
     }
 }
 
-int second_pass(list* list_instr, hashtbl* names)
+int second_pass(list* list_instr, hashtbl* names, const char* f)
 {
     list_node* p = list_instr->start;
     instr* current;
     int* ref;
     char error_msg[1000];
     int errn = 0;
+    int l;
 
     while (p)
     {
@@ -350,10 +346,11 @@ int second_pass(list* list_instr, hashtbl* names)
         if (current->ref)
         {
             ref = (int*) hashtbl_find(names, current->ref);
+            l = current->line;
             if (!ref)
             {
                 sprintf(error_msg, "name %s undeclared", current->ref);
-                error(error_msg, current->line);
+                ERROR(error_msg);
                 errn++;
             }
             else
@@ -363,7 +360,7 @@ int second_pass(list* list_instr, hashtbl* names)
                     sprintf(error_msg, "%s label is too far (max offset is "
                             "127, current is %d)", current->ref,
                             abs(*ref - current->addr));
-                    error(error_msg, current->line);
+                    ERROR(error_msg);
                     errn++;
                 }
                 else
@@ -378,7 +375,7 @@ int second_pass(list* list_instr, hashtbl* names)
     return (errn > 0);
 }
 
-list* parse(FILE* stream)
+list* parse(FILE* stream, char* name, const char* f)
 {
     char line[1000];
     char* read;
@@ -393,15 +390,14 @@ list* parse(FILE* stream)
     while ((read = fgets(line, 999, stream)) != NULL)
     {
         i++;
-        n = eval_line(line, &mdata, i, list_instr, names);
+        n = eval_line(line, &mdata, i, f, list_instr, names);
         if (n == 2)
             break;
         else if (n == 1)
             errn++;
     }
-
-    n = second_pass(list_instr, names);
-    if (n == 1)
+    strcpy(name, mdata.name);
+    if(second_pass(list_instr, names, f))
         errn++;
-    return list_instr;
+    return errn ? NULL : list_instr;
 }

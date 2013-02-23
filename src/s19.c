@@ -6,8 +6,6 @@
 #include "utils.h"
 #include "list.h"
 
-#define S19_LENGTH 0x42
-
 
 int size_list_instr(list* list_instr)
 {
@@ -51,7 +49,7 @@ unsigned char* to_bytes(list* list_instr, const int s)
     return b;
 }
 
-void print_s19(list* list_instr)
+void fprint_s19(list* list_instr, char* name, const int default_length)
 {
     int s = size_list_instr(list_instr);
     int org = ((instr*)list_instr->start->data)->addr;
@@ -61,25 +59,30 @@ void print_s19(list* list_instr)
 
     int k;
     int i;
-    int n = s / S19_LENGTH;
-    int current_length = S19_LENGTH;
+    int n = s / default_length;
+    int current_length = default_length;
     int current_addr;
+
+    FILE* f = fopen(name, "w");
 
     for(k = 0; k < n + 1; k++)
     {
         if (k == n)
-            current_length = s % S19_LENGTH;
-
-        current_addr = org + S19_LENGTH * k;
-        printf("S1%02X%04X", current_length + 3, current_addr);
-        checksum = current_length + 3 + current_addr / 0x100 +
-            (current_addr & 0xFF);
-        for (i = 0; i < current_length; i++)
+            current_length = s % default_length;
+        if(current_length)
         {
-            checksum += b[i + n * k];
-            printf("%02X", b[i + n * k]);
+            current_addr = org + default_length * k;
+            fprintf(f, "S1%02X%04X", current_length + 3, current_addr);
+            checksum = current_length + 3 + current_addr / 0x100 +
+                (current_addr & 0xFF);
+            for (i = 0; i < current_length; i++)
+            {
+                checksum += b[i + n * k];
+                fprintf(f, "%02X", b[i + n * k]);
+            }
+            fprintf(f, "%02X\n", (0xFF - (checksum & 0xFF)));
         }
-        printf("%02X\n", (0xFF - (checksum & 0xFF)));
     }
-    printf("S9030000FC\n");
+    fprintf(f, "S9030000FC\n");
+    fclose(f);
 }

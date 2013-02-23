@@ -21,6 +21,9 @@ $(ODIR)/%.o: $(SRCDIR)/%.c $(DEPS)
 all: $(OBJ)
 	${CC} ${CFLAGS} -o ${NAME} $^ -I$(DEPDIR)
 
+install:
+	cp ${NAME} /usr/bin/
+
 clean:
 	rm ${NAME}
 	rm -rf ${ODIR}
