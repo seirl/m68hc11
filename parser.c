@@ -10,7 +10,7 @@
 
 #define IDEN "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._"
 
-void error(char* msg, int line)
+void error(const char* msg, const int line)
 {
     printf("Error line %d: %s\n", line, msg);
 }
@@ -127,7 +127,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode, const int l)
         return 0;
 }
 
-int opcode_from_mode(opcode* instr, addressing mode)
+int opcode_from_mode(const opcode* instr, const addressing mode)
 {
     switch(mode)
     {
@@ -142,9 +142,9 @@ int opcode_from_mode(opcode* instr, addressing mode)
     }
 }
 
-int tokenize_line(char* line, char* label, char* opcode, char* operand)
+int tokenize_line(const char* line, char* label, char* opcode, char* operand)
 {
-    char* pline = line;
+    const char* pline = line;
     char* ptarget = label;
     if(among(*pline, "*\n;"))
         return 0;
@@ -187,8 +187,8 @@ int tokenize_line(char* line, char* label, char* opcode, char* operand)
     return 1;
 }
 
-int eval_line(char* line, meta* mdata, const int line_number, list* current,
-        hashtbl* names)
+int eval_line(const char* line, meta* mdata, const int line_number,
+        list* current, hashtbl* names)
 {
     char error_msg[1000];
     char label[300];

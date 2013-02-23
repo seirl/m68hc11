@@ -49,7 +49,7 @@ char* strtoupper(const char* src)
     return r;
 }
 
-int among(char c, char* str)
+int among(const char c, const char* str)
 {
     while(*str)
         if(*str++ == c)
@@ -57,12 +57,12 @@ int among(char c, char* str)
     return 0;
 }
 
-int is_blank(char c)
+int is_blank(const char c)
 {
     return among(c, " \t\n");
 }
 
-char* skip_blank(char* c)
+const char* skip_blank(const char* c)
 {
     while(among(*c, " \t"))
          c++; /* lol. */

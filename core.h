@@ -9,7 +9,7 @@ typedef enum
     DIR, /* Direct (8b data following the opcode is the @ of the operand) */
     EXT, /* Extended (similar than direct but for 16b adresses) */
     INDX,/* Indexed (address of operand calculated by offset + X) */
-    INDY, /* Indexed (address of operand calculated by offset + Y) */
+    INDY /* Indexed (address of operand calculated by offset + Y) */
 } addressing;
 
 typedef struct
@@ -24,7 +24,6 @@ typedef struct
     int indy;
 } opcode;
 
-
 typedef struct
 {
     int opcode;
@@ -34,31 +33,5 @@ typedef struct
     int line;
     int addr;
 } instr;
-
-typedef struct
-{
-    int opcode;
-    char* ref;
-    int size;
-    int addr;
-} refto;
-
-typedef enum
-{
-    ST_LABEL,
-    ST_INSTRUCTION,
-    ST_REFTO
-} statement_type;
-
-typedef struct
-{
-    statement_type t;
-    union
-    {
-        instr* instruction;
-        char* label;
-        refto* reference_to;
-    } u;
-} statement;
 
 #endif
