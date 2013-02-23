@@ -16,7 +16,7 @@ DEPS = $(patsubst %,$(DEPDIR)/%,$(_DEPS))
 
 $(ODIR)/%.o: $(SRCDIR)/%.c $(DEPS)
 	@mkdir -p $(ODIR)
-	$(CC) -c -o $@ $< $(CFLAGS) -I$(DEPDIR)
+	$(CC) -g -c -o $@ $< $(CFLAGS) -I$(DEPDIR)
 
 all: $(OBJ)
 	${CC} ${CFLAGS} -o ${NAME} $^ -I$(DEPDIR)

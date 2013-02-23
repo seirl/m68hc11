@@ -188,9 +188,9 @@ int eval_line(const char* line, meta* mdata, const int l, const char* f,
         list* current, hashtbl* names)
 {
     char error_msg[1000];
-    char label[300];
-    char instr_name[300];
-    char opr[300];
+    char label[1000];
+    char instr_name[1000];
+    char opr[1000];
 
     int operand;
     opcode* opc;
@@ -379,9 +379,9 @@ list* parse(FILE* stream, char* name, const char* f)
 {
     char line[1000];
     char* read;
-    int i = 0;
     int n = 0;
     int errn = 0;
+    int l = 0;
     meta mdata = { "", 0 };
     list* list_instr;
     hashtbl* names = hashtbl_init(127);
@@ -389,15 +389,35 @@ list* parse(FILE* stream, char* name, const char* f)
     list_instr = list_init();
     while ((read = fgets(line, 999, stream)) != NULL)
     {
-        i++;
-        n = eval_line(line, &mdata, i, f, list_instr, names);
+        l++;
+        if(read[strlen(read) - 1] != '\n')
+        {
+            ERROR("line too long");
+            errn++;
+            break;
+        }
+        n = eval_line(line, &mdata, l, f, list_instr, names);
         if (n == 2)
             break;
         else if (n == 1)
             errn++;
     }
+    l = 0;
+    if (!mdata.name)
+    {
+        ERROR("'name' directive not found");
+        errn++;
+    }
     strcpy(name, mdata.name);
+
+    /* Second pass : resolve labels */
     if(second_pass(list_instr, names, f))
         errn++;
-    return errn ? NULL : list_instr;
+
+    if (!list_instr->count && !errn)
+    {
+        ERROR("no instructions found");
+        errn++;
+    }
+    return (errn) ? NULL : list_instr;
 }

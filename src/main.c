@@ -45,7 +45,10 @@ int main(int argc, char* argv[])
                 }
                 l = parse(stream, name, argv[i]);
                 if (!l)
+                {
+                    printf("%s: *** Error 1\n", argv[i]);
                     return EXIT_FAILURE;
+                }
                 strcat(name, ".s19");
                 fprint_s19(l, name, s19_default_length);
                 fclose(stream);

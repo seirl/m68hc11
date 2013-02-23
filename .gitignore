@@ -1,5 +1,4 @@
 m68hc11
 obj/
 *.o
-*.asm
 *.swp

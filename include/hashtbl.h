@@ -3,7 +3,7 @@
 
 typedef struct list_collisions
 {
-    char label[100];
+    char label[1000];
     void* data;
     struct list_collisions* next;
 } list_collisions;
