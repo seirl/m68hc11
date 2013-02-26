@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include "core.h"
 
+/* Count the number of bytes taken by an instruction */
 int number_of_bytes(const instr* i)
 {
     if (i->opcode > 0xFFFF || i->operand > 0xFFFF ||
@@ -11,6 +12,7 @@ int number_of_bytes(const instr* i)
     return 2 + (i->operand > 0xFF) + (i->opcode > 0xFF);
 }
 
+/* Initialize an instruction structure */
 instr* create_instr(const int opcode, const int operand)
 {
     instr* i;
@@ -21,6 +23,7 @@ instr* create_instr(const int opcode, const int operand)
     return i;
 }
 
+/* Case-insensitive string comparison function, similar to strcmp(3) */
 int stricmp (const char *p1, const char *p2)
 {
   register unsigned char *s1 = (unsigned char *) p1;
@@ -37,6 +40,7 @@ int stricmp (const char *p1, const char *p2)
   return c1 - c2;
 }
 
+/* Capitalize a string */
 char* strtoupper(const char* src)
 {
     char* dst = calloc((strlen(src) + 1), sizeof(char));
@@ -49,6 +53,7 @@ char* strtoupper(const char* src)
     return r;
 }
 
+/* Check if a character belongs to some set of chars */
 int among(const char c, const char* str)
 {
     while(*str)
@@ -57,11 +62,13 @@ int among(const char c, const char* str)
     return 0;
 }
 
+/* Check if a character is an empty one (space, newline or carriage return) */
 int is_blank(const char c)
 {
     return among(c, " \t\n");
 }
 
+/* Returns a pointer to the next non-blank character in the string */
 const char* skip_blank(const char* c)
 {
     while(among(*c, " \t"))

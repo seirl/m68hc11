@@ -7,6 +7,7 @@
 #include "list.h"
 
 
+/* Get the total size in bytes of the instruction list */
 int size_list_instr(list* list_instr)
 {
     instr* current;
@@ -18,6 +19,7 @@ int size_list_instr(list* list_instr)
     return bytes;
 }
 
+/* Transform a linked list of struct instr* to a linked list of bytes */
 unsigned char* to_bytes(list* list_instr, const int s)
 {
     unsigned char* b = calloc(s, sizeof(char));
@@ -49,6 +51,7 @@ unsigned char* to_bytes(list* list_instr, const int s)
     return b;
 }
 
+/* Generate and save the s19 output from an instruction list */
 void fprint_s19(list* list_instr, char* name, const int default_length)
 {
     int s = size_list_instr(list_instr);

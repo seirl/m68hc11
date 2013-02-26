@@ -3,6 +3,7 @@
 #include "list.h"
 
 
+/* Initialize the data structure */
 list* list_init()
 {
     list* new = malloc(sizeof(list));
@@ -12,6 +13,7 @@ list* list_init()
     return new;
 }
 
+/* Add an element at the end of the list */
 void list_append(list* l, const void* data, const size_t sdata)
 {
     list_node* new = malloc(sizeof(list_node));
@@ -27,6 +29,7 @@ void list_append(list* l, const void* data, const size_t sdata)
     l->count++;
 }
 
+/* Destroy the list and all its content */
 void list_destroy(list* l)
 {
     list_node* p;

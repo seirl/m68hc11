@@ -3,6 +3,7 @@
 #include <string.h>
 #include "hashtbl.h"
 
+/* Hash function (using the djb2 algorithm) with excellent distribution */
 int hash(const int size, const char* str)
 {
     int h = 1337;
@@ -12,6 +13,7 @@ int hash(const int size, const char* str)
     return h;
 }
 
+/* Initialize the data type */
 hashtbl* hashtbl_init(const int size)
 {
     int i;
@@ -23,6 +25,7 @@ hashtbl* hashtbl_init(const int size)
     return tbl;
 }
 
+/* Find an element in the hashtable by its label */
 void* hashtbl_find(hashtbl* tbl, const char* label)
 {
     list_collisions* p;
@@ -37,6 +40,7 @@ void* hashtbl_find(hashtbl* tbl, const char* label)
     return NULL;
 }
 
+/* Intermediate function used to create an element in the table */
 list_collisions* _hashtbl_create(const char* label, const void* data,
         const size_t sdata)
 {
@@ -48,6 +52,7 @@ list_collisions* _hashtbl_create(const char* label, const void* data,
     return new;
 }
 
+/* Add an element in the table */
 int hashtbl_add(hashtbl* tbl, const char* label, const void* data,
         const size_t sdata)
 {
@@ -68,12 +73,14 @@ int hashtbl_add(hashtbl* tbl, const char* label, const void* data,
     return 0;
 }
 
+/* Intermediate function used to remove an element in the table */
 void _hashtbl_remove(list_collisions* elt)
 {
     free(elt->data);
     free(elt);
 }
 
+/* Remove an element in the table */
 int hashtbl_delete(hashtbl* tbl, const char* label)
 {
     list_collisions* p;
@@ -100,6 +107,7 @@ int hashtbl_delete(hashtbl* tbl, const char* label)
     return 1;
 }
 
+/* Display an ASCII representation of the hashtable, useful for debug */
 void hashtbl_print(const hashtbl* tbl)
 {
     int i;
@@ -116,6 +124,7 @@ void hashtbl_print(const hashtbl* tbl)
     }
 }
 
+/* Destroy the hashtable */
 void hashtbl_destroy(hashtbl* tbl)
 {
     int i;

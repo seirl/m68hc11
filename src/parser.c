@@ -11,11 +11,13 @@
 #define IDEN "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._"
 #define ERROR(msg) printf("%s:%d:%s\n", f, l, msg);
 
+/* Metadata */
 typedef struct {
     char name[1000];
     int org;
 } meta;
 
+/* Parse a numerical operand and returns its value and its addressing mode */
 int parse_operand(const char* opr, int* operand, addressing* mode,
         const int l, const char* f)
 {
@@ -27,6 +29,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode,
     char error_msg[1000];
 
     *mode = DIR;
+    /* Handle immediate mode */
     if (opr_addr[0] == '#')
     {
         *mode = IMM;
@@ -35,17 +38,17 @@ int parse_operand(const char* opr, int* operand, addressing* mode,
     base = opr_addr[0];
     switch (base)
     {
-        case '%':
+        case '%':   /* Binary */
             result = strtol(opr_addr + 1, &endptr, 2);
             break;
-        case '@':
+        case '@':   /* Octal */
             result = strtol(opr_addr + 1, &endptr, 8);
             break;
-        case '$':
+        case '$':   /* Hexadecimal */
             result = strtol(opr_addr + 1, &endptr, 16);
             break;
         default:
-            if ('1' <= base && base < '9')
+            if ('1' <= base && base < '9') /* Decimal */
                 result = strtol(opr_addr, &endptr, 10);
             else
             {
@@ -57,6 +60,8 @@ int parse_operand(const char* opr, int* operand, addressing* mode,
     }
     *operand = result;
     opr_addr = endptr;
+
+    /* Handle indexed addressing mode */
     if (opr_addr[0] == ',')
     {
         index_reg = opr_addr[1];
@@ -103,7 +108,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode,
 
     if (*mode == DIR && *operand > 0xFF)
     {
-        *mode = EXT;
+        *mode = EXT; /* Extended mode (16 bit operand) */
     }
 
     if ((*mode == INDX || *mode == INDY)  && *operand > 0xFF)
@@ -124,6 +129,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode,
         return 0;
 }
 
+/* Return the opcode of an instruction given its addressing mode */
 int opcode_from_mode(const opcode* instr, const addressing mode)
 {
     switch(mode)
@@ -139,6 +145,7 @@ int opcode_from_mode(const opcode* instr, const addressing mode)
     }
 }
 
+/* Tokenize a line in a label, an opcode and an operand */
 int tokenize_line(const char* line, char* label, char* opcode, char* operand)
 {
     const char* pline = line;
@@ -146,7 +153,7 @@ int tokenize_line(const char* line, char* label, char* opcode, char* operand)
     if(among(*pline, "*\n;"))
         return 0;
 
-    /* Parsing label */
+    /* Parse label */
     while(!is_blank(*pline))
         *ptarget++ = *pline++;
     if(ptarget - 1 >= line)
@@ -165,7 +172,7 @@ int tokenize_line(const char* line, char* label, char* opcode, char* operand)
         return 1;
     }
 
-    /* Parsing opcode */
+    /* Parse opcode */
     ptarget = opcode;
     while(!is_blank(*pline))
         *ptarget++ = (unsigned char) toupper((int)*pline++);
@@ -178,7 +185,7 @@ int tokenize_line(const char* line, char* label, char* opcode, char* operand)
         return 1;
     }
 
-    /* Parsing operand */
+    /* Parse operand */
     ptarget = operand;
     while(!among(*pline, "\n;"))
         *ptarget++ = *pline++;
@@ -187,6 +194,7 @@ int tokenize_line(const char* line, char* label, char* opcode, char* operand)
     return 1;
 }
 
+/* Evaluate the current line and add the instruction found in the list */
 int eval_line(const char* line, meta* mdata, const int l, const char* f,
         list* current, hashtbl* names)
 {
@@ -207,6 +215,7 @@ int eval_line(const char* line, meta* mdata, const int l, const char* f,
     if(!tokenize_line(line, label, instr_name, opr))
         return 0;
 
+    /* Add labels to the environment hashtable */
     if (*label)
     {
         idata = malloc(sizeof(int));
@@ -233,6 +242,7 @@ int eval_line(const char* line, meta* mdata, const int l, const char* f,
     if (!*instr_name)
         return 0;
 
+    /* Handle assembly directives */
     if (!strcmp(instr_name, "NAME"))
     {
         strcpy(mdata->name, opr);
@@ -277,6 +287,7 @@ int eval_line(const char* line, meta* mdata, const int l, const char* f,
                 return 1;
             }
 
+            /* Handle operand names */
             if (among(*opr, IDEN))
             {
                 if (opc->rel == -1)
@@ -328,6 +339,8 @@ int eval_line(const char* line, meta* mdata, const int l, const char* f,
         }
         current_addr += i->size;
         i->line = l;
+
+        /* Actually add the instruction to the list */
         list_append(current, i, sizeof(instr));
 
         free(i);
@@ -335,6 +348,7 @@ int eval_line(const char* line, meta* mdata, const int l, const char* f,
     }
 }
 
+/* Second pass: resolve branching addresses */
 int second_pass(list* list_instr, hashtbl* names, const char* f)
 {
     list_node* p = list_instr->start;
@@ -380,6 +394,7 @@ int second_pass(list* list_instr, hashtbl* names, const char* f)
     return (errn > 0);
 }
 
+/* Main parse function, return an instruction list */
 list* parse(FILE* stream, char* name, const char* f)
 {
     char line[1000];
@@ -392,15 +407,20 @@ list* parse(FILE* stream, char* name, const char* f)
     hashtbl* names = hashtbl_init(127);
 
     list_instr = list_init();
+
+    /* Iterate over the lines of the file */
     while ((read = fgets(line, 999, stream)) != NULL)
     {
         l++;
+
+        /* Handle too long lines */
         if(read[strlen(read) - 1] != '\n')
         {
             ERROR("line too long");
             errn++;
             break;
         }
+        /* Actual work on the current line */
         n = eval_line(line, &mdata, l, f, list_instr, names);
         if (n == 2)
             break;

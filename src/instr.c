@@ -28,11 +28,13 @@ void init_opcodes()
     #undef X
 }
 
+/* Destroys the global list of opcodes */
 void destroy_opcodes()
 {
     hashtbl_destroy(g_opcodes);
 }
 
+/* Returns an opcode given its mnemonic */
 opcode* get_opcode(const char* mnemo)
 {
     char* upper = strtoupper(mnemo);
