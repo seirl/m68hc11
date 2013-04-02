@@ -12,18 +12,19 @@ hashtbl* g_opcodes;
 void init_opcodes()
 {
     /* I want to know the number of instructions to create an efficient
-     * hashtable. This macro "counts" the number of instructions by adding +1
-     * each time a new instruction is met */
-    #define X(A,B,C,D,E,F,G,H) +1
+     * hashtable. This variadic macro "counts" the number of instructions by
+     * adding +1 each time a new instruction is met */
+    #define X(...) +1
     g_opcodes = hashtbl_init(0
         #include "opcodes.def"
     );
     #undef X
 
     /* This one actually adds the instructions in the hashtable */
-    #define X(A,B,C,D,E,F,G,H)\
-        hashtbl_add(g_opcodes, #A,\
-        &((opcode) { #A,B,C,D,E,F,G,H }), sizeof(opcode));
+    #define X(Mnemo, Rel, Inh, Imm, Dir, Ext, IndX, IndY)              \
+        hashtbl_add(g_opcodes, #Mnemo,                                 \
+        &((opcode) { #Mnemo, Rel, Inh, Imm, Dir, Ext, IndX, IndY }),   \
+                sizeof(opcode));
     #include "opcodes.def"
     #undef X
 }
