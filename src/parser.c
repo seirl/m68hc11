@@ -47,6 +47,12 @@ int parse_operand(const char* opr, int* operand, addressing* mode,
         case '$':   /* Hexadecimal */
             result = strtol(opr_addr + 1, &endptr, 16);
             break;
+        case '\'':   /* ASCII */
+            result = *(opr_addr + 1);
+            /* We need an explicit cast here because of strtol() which takes a
+             * char** instead of a const char** */
+            endptr = (char*) opr_addr + 2;
+            break;
         default:
             if ('1' <= base && base < '9') /* Decimal */
                 result = strtol(opr_addr, &endptr, 10);
