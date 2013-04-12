@@ -8,7 +8,7 @@
 #include "utils.h"
 #include "hashtbl.h"
 
-#define IDEN "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._"
+#define IDEN "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz._"
 #define ERROR(msg) printf("%s:%d:%s\n", f, l, msg);
 
 /* Metadata */
@@ -81,7 +81,7 @@ int parse_operand(const char* opr, int* operand, addressing* mode,
             ERROR("expected a register name");
             return 1;
         }
-        else if (opr_addr[3] != '\0')
+        else if (opr_addr[2] != '\0')
         {
             sprintf(error_msg, "unexpected '%c'", opr_addr[3]);
             ERROR(error_msg);
@@ -124,6 +124,8 @@ int parse_operand(const char* opr, int* operand, addressing* mode,
         ERROR(error_msg);
         return 1;
     }
+
+    opr_addr = skip_blank(opr_addr);
 
     if (opr_addr[0] != '\0')
     {
