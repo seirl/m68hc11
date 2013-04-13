@@ -52,7 +52,7 @@ unsigned char* to_bytes(list* list_instr, const int s)
 }
 
 /* Generate and save the s19 output from an instruction list */
-void fprint_s19(list* list_instr, char* name, const int default_length)
+void fprint_s19(list* list_instr, FILE* f, const int default_length)
 {
     int s = size_list_instr(list_instr);
     int org = ((instr*)list_instr->start->data)->addr;
@@ -65,8 +65,6 @@ void fprint_s19(list* list_instr, char* name, const int default_length)
     int n = s / default_length;
     int current_length = default_length;
     int current_addr;
-
-    FILE* f = fopen(name, "w");
 
     for(k = 0; k < n + 1; k++)
     {

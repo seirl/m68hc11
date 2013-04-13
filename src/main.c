@@ -14,14 +14,15 @@ int main(int argc, char* argv[])
     char name[1000];
     init_opcodes();
     int i;
-    int s19_default_length = 0x42;
+    int display = 0;
+    FILE* f;
     if (argc <= 1 ||
         (argc == 2 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))))
     {
         /* Display help */
-        printf("Usage: %s [-h | -s N] file1.asm [file2.asm […]]\n", argv[0]);
+        printf("Usage: %s [-h | -d] file1.asm [file2.asm […]]\n", argv[0]);
         printf("\t-h\tdisplay help\n");
-        printf("\t-s N\twrite N instructions per s19 record\n");
+        printf("\t-d\tdisplay the output to stdout\n");
     }
     else
     {
@@ -29,14 +30,9 @@ int main(int argc, char* argv[])
         for (i = 1; i < argc; i++)
         {
             /* Handle options */
-            if (!strcmp(argv[i], "-s"))
+            if (!strcmp(argv[i], "-d"))
             {
-                s19_default_length = strtol(argv[++i], NULL, 10);
-                if(s19_default_length < 1)
-                {
-                    printf("'%s' is not a valid length\n", argv[i]);
-                    return EXIT_FAILURE;
-                }
+                display = 1;
             }
             else
             {
@@ -56,8 +52,12 @@ int main(int argc, char* argv[])
                 }
                 strcat(name, ".s19");
 
+                if (display)
+                    f = stdout;
+                else
+                    f = fopen(name, "w");
                 /* Generate and save the s19 output */
-                fprint_s19(l, name, s19_default_length);
+                fprint_s19(l, f, 32);
                 list_destroy(l);
                 fclose(stream);
             }
