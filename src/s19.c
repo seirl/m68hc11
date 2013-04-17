@@ -19,7 +19,7 @@ int size_list_instr(list* list_instr)
     return bytes;
 }
 
-/* Transform a linked list of struct instr* to a linked list of bytes */
+/* Transform a linked list of struct instr* to an array of bytes */
 unsigned char* to_bytes(list* list_instr, const int s)
 {
     unsigned char* b = calloc(s, sizeof(char));
@@ -32,7 +32,7 @@ unsigned char* to_bytes(list* list_instr, const int s)
         current = p->data;
         if(current->opcode > 0xFF)
         {
-            *i++ = current->opcode / 0x100;
+            *i++ = current->opcode >> 8;
             *i++ = current->opcode & 0xFF;
         }
         else
@@ -40,8 +40,8 @@ unsigned char* to_bytes(list* list_instr, const int s)
 
         if(current->operand > 0xFF)
         {
-            *i++ = current->operand / 0x100;
-            *i++ = current->operand % 0xFF;
+            *i++ = current->operand >> 8;
+            *i++ = current->operand & 0xFF;
         }
         else
             *i++ = current->operand;
