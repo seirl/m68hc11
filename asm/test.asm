@@ -1,4 +1,4 @@
-lbl:    name test
+        name test
         org $500
         ldaa #$20
         end
