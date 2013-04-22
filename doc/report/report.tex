@@ -1,0 +1,127 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage{graphicx}
+\usepackage{minted}
+\usepackage{a4wide}
+\usepackage{tikz}
+
+\title{Digital and embedded software\\A m68hc11 two-pass assembler}
+\author{Antoine Pietri}
+\date{Friday, April 26th 2013}
+
+
+\begin{document}
+    \expandafter\def\csname PY@tok@err\endcsname{}
+    \maketitle
+    \tableofcontents
+
+    \newpage
+    \section{Synopsis}
+
+        The purpose of this paper is to introduce the core principles of the
+        project I've been working on for some weeks, as part of the
+        \emph{Digital and embedded software} project of the StaffordShire
+        University: an assembler for the m68hc11 asm language.
+
+        The assembler is divided into different parts: a two-passes parser that
+        transforms the assembly language to a list of bytes, and a printer
+        which displays this bytes in the S19 format.
+
+    \section{Installation instructions}
+
+        Here are the example instructions for installing the m68hc11 assembler
+        from a debian-based system. Please note that this program is fully
+        ANSI-C compatible, which means you can easily use it with any ANSI-C
+        compatible compiler, on any plateform (Windows with Visual
+        Studio\ldots)
+        
+        \begin{minted}{console}
+            % sudo apt-get install git build-essentials
+            % git clone https://serialk@bitbucket.org/serialk/m68hc11.git
+            % cd m68hc11/
+            % make
+        \end{minted}
+
+        You can then use it like this:
+
+        \begin{minted}{console}
+            % ./m68hc11 [options] [files]
+        \end{minted}
+
+    \section{Command line parameters}
+
+        There aren't any kind of menu to parameter the behavior of the program,
+        everything is made by command line. To get a list of available options,
+        use -h:
+
+        \begin{minted}{console}
+            % ./m68hc11 -h
+            Usage: ./m68hc11 [-h | -d] file1.asm [file2.asm […]]
+            -h      display help
+            -d      display the output to stdout
+        \end{minted}
+
+
+    \section{Demonstration}
+        
+        Let's say we need to assemble this file named test.asm:
+
+        \inputminted{nasm}{../../asm/test.asm}
+
+        The assembly only requires a simple manipulation :
+
+        \begin{minted}{console}
+            % ./m68hc11 test.asm
+            % cat test.s19
+            S105050086204F
+            S9030000FC
+        \end{minted}
+
+        The assembler is compatible with the whole m68hc11 assembly language, 
+        and it's very efficient and suitable for this kind of task.
+
+        For a more complete demonstration, you can see there an example using a
+        lot of addressing mode, labels, relative branching and jumps:
+
+        \textbf{Input:}
+        \inputminted{nasm}{../../asm/long.asm}
+
+        \textbf{Output:}
+        \inputminted{console}{../../asm/long.s19}
+
+    \section{Concurrency network diagram}
+        \input{graph.tex}
+
+    \newpage
+    \section{Source code}
+        \subsection{core.h}
+            \inputminted[linenos]{c}{../../src/core.h}
+        \subsection{hashtbl.h}
+            \inputminted[linenos]{c}{../../src/hashtbl.h}
+        \subsection{instr.h}
+            \inputminted[linenos]{c}{../../src/instr.h}
+        \subsection{list.h}
+            \inputminted[linenos]{c}{../../src/list.h}
+        \subsection{parser.h}
+            \inputminted[linenos]{c}{../../src/parser.h}
+        \subsection{s19.h}
+            \inputminted[linenos]{c}{../../src/s19.h}
+        \subsection{utils.h}
+            \inputminted[linenos]{c}{../../src/utils.h}
+        \subsection{hashtbl.c}
+            \inputminted[linenos]{c}{../../src/hashtbl.c}
+        \subsection{instr.c}
+            \inputminted[linenos]{c}{../../src/instr.c}
+        \subsection{list.c}
+            \inputminted[linenos]{c}{../../src/list.c}
+        \subsection{main.c}
+            \inputminted[linenos]{c}{../../src/main.c}
+        \subsection{parser.c}
+            \inputminted[linenos]{c}{../../src/parser.c}
+        \subsection{s19.c}
+            \inputminted[linenos]{c}{../../src/s19.c}
+        \subsection{utils.c}
+            \inputminted[linenos]{c}{../../src/utils.c}
+        \subsection{opcodes.def}
+            \inputminted[linenos]{c}{../../src/opcodes.def}
+
+\end{document}

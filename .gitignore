@@ -2,3 +2,7 @@ m68hc11
 obj/
 *.o
 *.swp
+*.aux
+*.log
+*.toc
+*.pdf

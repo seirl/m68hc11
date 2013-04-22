@@ -1,0 +1,38 @@
+digraph assembly {
+    subgraph clusterglobal {
+        color=red;
+        label="Global hashtables";
+        ht [label="Opcodes", shape="hexagon"];
+        env [label="Environment", shape="hexagon"];
+    }
+    subgraph clusterparser {
+        color=grey;
+        label="Parser";
+        p1 [label="First pass", shape="box"];
+        p2 [label="Second pass", shape="box"];
+        po [label="Parse operand"];
+        pl [label="Parse line"];
+        p1 -> p2 [label="Linked list", color="blue"];
+        pl -> p1;
+        po -> pl;
+    }
+    file [label="Read file", shape="box"];
+    file -> p1 [label="Raw text", color="blue"];
+    ht -> pl;
+    p1 -> env;
+    env -> p2;
+
+    subgraph clusters19 {
+        color=green;
+        label="S19 generator";
+        v [label="List to bytes", shape="box"];
+        s19 [label="s19 generation", shape="box"];
+        chk [label="Checksum"];
+        v -> s19 [label="Bytes vector", color="blue"];
+        chk -> s19;
+    }
+
+    p2 -> v [color="blue"];
+    output [label="Output", shape="box"];
+    s19 -> output [color="blue"];
+}
