@@ -78,8 +78,8 @@ void fprint_s19(list* list_instr, FILE* f, const int default_length)
                 (current_addr & 0xFF);
             for (i = 0; i < current_length; i++)
             {
-                checksum += b[i + n * k];
-                fprintf(f, "%02X", b[i + n * k]);
+                checksum += b[i + default_length * k];
+                fprintf(f, "%02X", b[i + default_length * k]);
             }
             fprintf(f, "%02X\n", (0xFF - (checksum & 0xFF)));
         }
